@@ -1,5 +1,6 @@
 import { Cinzel, Montserrat } from 'next/font/google';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import '../globals.css';
 import GoogleAnalytics from '../components/GoogleAnalytics';
 import GoogleTagManager, { GoogleTagManagerNoScript } from '../components/GoogleTagManager';
@@ -89,7 +90,9 @@ export default function PublicLayout({
       <body className="font-montserrat antialiased">
         <GoogleTagManagerNoScript />
         <GoogleAnalytics />
-        <MetaPixel />
+        <Suspense fallback={null}>
+          <MetaPixel />
+        </Suspense>
         {children}
       </body>
     </html>
