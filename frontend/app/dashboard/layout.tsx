@@ -106,22 +106,43 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-gray-100">
-      {/* Sidebar */}
+    <div className="relative min-h-screen bg-[#050505] text-gray-100">
+      {/* Background Effects - Black Piano Premium */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        {/* Gradiente Radial de Profundidade */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_#0a0a0a_0%,_#050505_50%,_#000000_100%)]" />
+        
+        {/* Grid Sutil Verde com Opacidade 0.02 */}
+        <div 
+          className="absolute inset-0" 
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(34, 197, 94, 0.02) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(34, 197, 94, 0.02) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px'
+          }}
+        />
+        
+        {/* Glow Effect sutil */}
+        <div className="absolute left-1/4 top-0 h-[500px] w-[500px] bg-emerald-500/5 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] bg-blue-500/5 blur-[120px]" />
+      </div>
+      {/* Sidebar - Black Piano Style */}
       <aside
         className={cn(
           'fixed left-0 top-0 z-40 h-screen transition-transform duration-300',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-          'w-64 bg-[#1e293b] border-r border-gray-800'
+          'w-64 bg-black/40 backdrop-blur-xl border-r border-white/5'
         )}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex h-16 items-center justify-between border-b border-gray-800 px-4">
-            <h1 className="text-xl font-bold text-white">Humano Saúde</h1>
+          <div className="flex h-16 items-center justify-between border-b border-white/5 px-4">
+            <h1 className="font-mono text-xl font-bold text-white tracking-tight">Humano Saúde</h1>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden rounded-lg p-2 hover:bg-gray-800"
+              className="lg:hidden rounded-lg p-2 hover:bg-white/5 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -144,19 +165,19 @@ export default function DashboardLayout({
                         <button
                           onClick={() => toggleMenu(item.name)}
                           className={cn(
-                            'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                            'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                             active
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                              ? 'bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10'
+                              : 'text-gray-400 hover:bg-white/5 hover:text-white'
                           )}
                         >
                           <div className="flex items-center gap-3">
                             <Icon className="h-5 w-5" />
-                            <span>{item.name}</span>
+                            <span className="font-sans">{item.name}</span>
                             {item.badge && (
                               <Badge
                                 variant="secondary"
-                                className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                                className="bg-emerald-500/20 text-xs text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 font-mono"
                               >
                                 {item.badge}
                               </Badge>
@@ -172,18 +193,18 @@ export default function DashboardLayout({
                         <Link
                           href={item.href}
                           className={cn(
-                            'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                            'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                             active
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                              ? 'bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10'
+                              : 'text-gray-400 hover:bg-white/5 hover:text-white'
                           )}
                         >
                           <Icon className="h-5 w-5" />
-                          <span>{item.name}</span>
+                          <span className="font-sans">{item.name}</span>
                           {item.badge && (
                             <Badge
                               variant="secondary"
-                              className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                              className="bg-emerald-500/20 text-xs text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 font-mono"
                             >
                               {item.badge}
                             </Badge>
@@ -194,7 +215,7 @@ export default function DashboardLayout({
 
                     {/* Submenu */}
                     {hasSubmenu && isExpanded && (
-                      <ul className="ml-6 mt-1 space-y-1 border-l border-gray-700 pl-3">
+                      <ul className="ml-6 mt-1 space-y-1 border-l border-white/10 pl-3">
                         {item.submenu!.map((subitem) => {
                           const SubIcon = subitem.icon;
                           const subActive = isActive(subitem.href);
@@ -204,14 +225,14 @@ export default function DashboardLayout({
                               <Link
                                 href={subitem.href}
                                 className={cn(
-                                  'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
+                                  'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200',
                                   subActive
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                    : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
                                 )}
                               >
                                 {SubIcon && <SubIcon className="h-4 w-4" />}
-                                <span>{subitem.name}</span>
+                                <span className="font-sans">{subitem.name}</span>
                               </Link>
                             </li>
                           );
@@ -225,14 +246,14 @@ export default function DashboardLayout({
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-gray-800 p-4">
+          <div className="border-t border-white/5 p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-sm font-semibold font-mono shadow-lg shadow-emerald-500/20">
                 HS
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">Humano Saúde</p>
-                <p className="text-xs text-gray-400 truncate">Admin</p>
+                <p className="text-sm font-medium text-white truncate font-sans">Humano Saúde</p>
+                <p className="text-xs text-gray-500 truncate font-mono">Admin</p>
               </div>
             </div>
           </div>
@@ -242,25 +263,25 @@ export default function DashboardLayout({
       {/* Main Content */}
       <div
         className={cn(
-          'transition-all duration-300',
+          'relative z-10 transition-all duration-300',
           sidebarOpen ? 'lg:ml-64' : 'ml-0'
         )}
       >
-        {/* Top Bar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-gray-800 bg-[#1e293b] px-4 lg:px-6">
+        {/* Top Bar - Black Piano Premium */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl px-4 lg:px-6">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-lg p-2 hover:bg-gray-800"
+            className="rounded-lg p-2 hover:bg-white/5 transition-colors"
           >
             <Menu className="h-5 w-5" />
           </button>
 
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-white">Dashboard</h2>
+            <h2 className="text-lg font-semibold text-white font-sans">Broker OS</h2>
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="rounded-lg p-2 hover:bg-gray-800">
+            <button className="rounded-lg p-2 hover:bg-white/5 transition-colors">
               <Settings className="h-5 w-5 text-gray-400" />
             </button>
           </div>
@@ -273,7 +294,7 @@ export default function DashboardLayout({
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/80 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
