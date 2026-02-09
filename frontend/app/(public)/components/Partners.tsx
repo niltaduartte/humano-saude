@@ -6,15 +6,15 @@ import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
 
 const logos = [
-  { name: 'Amil', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/amil-logo.png' },
-  { name: 'Bradesco', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/bradesco-logo.png' },
-  { name: 'SulAmérica', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/sulamerica-logo-2.png' },
-  { name: 'Unimed', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/unimed-logo.png' },
-  { name: 'Porto Saúde', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/portosaude-logo.png' },
-  { name: 'Assim Saúde', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/assimsaude-logo.png' },
-  { name: 'Leve Saúde', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/levesaude-logo.png' },
-  { name: 'MedSênior', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/medsenior-logo.png' },
-  { name: 'Prevent Senior', url: 'https://humanosaude.com.br/wp-content/uploads/2026/02/preventsenior-logo.png' },
+  { name: 'Amil', url: '/images/operadoras/amil-logo.png' },
+  { name: 'Bradesco', url: '/images/operadoras/bradesco-logo.png' },
+  { name: 'SulAmérica', url: '/images/operadoras/sulamerica-logo (2).png' },
+  { name: 'Unimed', url: '/images/operadoras/unimed-logo.png' },
+  { name: 'Porto Saúde', url: '/images/operadoras/portosaude-logo.png' },
+  { name: 'Assim Saúde', url: '/images/operadoras/assimsaude-logo.png' },
+  { name: 'Leve Saúde', url: '/images/operadoras/levesaude-logo.png' },
+  { name: 'MedSênior', url: '/images/operadoras/medsenior-logo.png' },
+  { name: 'Prevent Senior', url: '/images/operadoras/preventsenior-logo.png' },
 ];
 
 export default function Partners() {
