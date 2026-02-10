@@ -48,7 +48,7 @@ import Logo, { LogoIcon, LogoWithGradientText } from "./Logo"
 interface MenuItem {
   id: string
   label: string
-  icon: React.ElementType
+  icon: React.ComponentType<{ className?: string }>
   href: string
   badge?: {
     text: string
