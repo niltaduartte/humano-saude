@@ -1,6 +1,7 @@
 'use client';
 
 import DockSidebar from '../components/DockSidebar';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function DashboardLayout({
   children,
@@ -47,6 +48,9 @@ export default function DashboardLayout({
         {/* Page Content */}
         <main className="p-4 lg:p-6">{children}</main>
       </div>
+      
+      {/* Toast Notifications */}
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }

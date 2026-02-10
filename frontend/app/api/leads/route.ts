@@ -1,24 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-
-// Validação com Zod
-const leadSchema = z.object({
-  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  telefone: z.string().min(10, 'Telefone inválido'),
-  perfil: z.enum(['Individual', 'Familiar', 'Empresarial']),
-  // Campos opcionais
-  tipo_contratacao: z.string().optional(),
-  cnpj: z.string().optional(),
-  acomodacao: z.string().optional(),
-  idades_beneficiarios: z.array(z.string()).optional(),
-  bairro: z.string().optional(),
-  top_3_planos: z.string().optional(),
-  utm_source: z.string().optional(),
-  utm_medium: z.string().optional(),
-  utm_campaign: z.string().optional(),
-});
+import { apiLeadSchema } from '@/lib/validations';
 
 // Inicializar Supabase com Service Role (server-side)
 const supabase = createClient(
@@ -37,7 +20,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validar dados
-    const validatedData = leadSchema.parse(body);
+    const validatedData = apiLeadSchema.parse(body);
+    
+    // Converter top_3_planos array para string se necessário
+    const top_3_planos = Array.isArray(validatedData.top_3_planos)
+      ? validatedData.top_3_planos.join(', ')
+      : validatedData.top_3_planos || null;
     
     // Capturar IP e User-Agent
     const ip = request.headers.get('x-forwarded-for') || 
@@ -51,6 +39,7 @@ export async function POST(request: NextRequest) {
       .insert([
         {
           ...validatedData,
+          top_3_planos,
           ip_address: ip,
           user_agent: userAgent,
           status: 'Novo',

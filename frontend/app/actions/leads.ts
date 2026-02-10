@@ -105,8 +105,8 @@ export async function saveScannedLead(
     }
 
     // Revalida o cache da página de leads
-    revalidatePath('/dashboard/leads');
-    revalidatePath('/dashboard');
+    revalidatePath('/portal-interno-hks-2026/leads');
+    revalidatePath('/portal-interno-hks-2026');
 
     console.log('✅ Lead salvo com sucesso:', data.id);
 
@@ -234,8 +234,8 @@ export async function updateLeadStatus(
     }
 
     // Revalida o cache
-    revalidatePath('/dashboard/leads');
-    revalidatePath('/dashboard');
+    revalidatePath('/portal-interno-hks-2026/leads');
+    revalidatePath('/portal-interno-hks-2026');
 
     return {
       success: true,

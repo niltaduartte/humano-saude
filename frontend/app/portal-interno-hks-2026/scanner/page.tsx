@@ -3,48 +3,60 @@
 import { useState } from 'react';
 import { LuxuryTitle, GoldScanner } from '@/components/premium';
 import { saveScannedLead, type ScannedLeadData } from '@/app/actions/leads';
+import { apiService, type PDFExtraido } from '@/app/services/api';
+import { toast } from 'sonner';
+import { StatsCard, StatsGrid } from '../components';
+import { FileText, Target, Clock } from 'lucide-react';
 
 export default function ScannerPDFPage() {
   const [lastScan, setLastScan] = useState<any>(null);
-  const [processing, setProcessing] = useState(false);
+  const [extractedData, setExtractedData] = useState<PDFExtraido | null>(null);
+  const [scanCount, setScanCount] = useState(0);
 
   const handlePdfDropped = async (file: File) => {
     console.log('📄 PDF recebido:', file.name);
-    setProcessing(true);
-    
-    // Simulação: Aqui você faria a chamada para o backend Python
-    // const response = await fetch('/api/scanner/process', {
-    //   method: 'POST',
-    //   body: formData
-    // });
-    
-    // Por agora, vamos simular dados
-    setTimeout(async () => {
-      const simulatedData: ScannedLeadData = {
-        nome: 'João Silva (Simulado)',
-        whatsapp: '21999887766',
-        email: 'joao.silva@email.com',
-        operadora_atual: 'Amil',
-        valor_atual: 1200.00,
-        idades: [35, 32, 8, 5],
-        economia_estimada: 480.00,
-        valor_proposto: 720.00,
-        tipo_contratacao: 'familiar',
-        dados_pdf: { arquivo: file.name },
-        observacoes: 'Lead gerado automaticamente pelo Scanner IA'
+
+    try {
+      // Chamar o proxy real /api/pdf → backend Python
+      const data = await apiService.extrairPDFProxy(file);
+      setExtractedData(data);
+      setScanCount((prev) => prev + 1);
+
+      // Montar dados do lead a partir do PDF extraído
+      const leadData: ScannedLeadData = {
+        nome: data.nome_beneficiarios?.[0] || `Lead PDF - ${file.name}`,
+        whatsapp: '',
+        email: '',
+        operadora_atual: data.operadora || undefined,
+        valor_atual: data.valor_atual || undefined,
+        idades: data.idades || [],
+        tipo_contratacao: data.tipo_plano || undefined,
+        dados_pdf: {
+          arquivo: file.name,
+          confianca: data.confianca,
+          total_caracteres: data.total_caracteres,
+          texto_preview: data.texto_extraido_preview,
+        },
+        observacoes: `Lead gerado pelo Scanner IA | Confiança: ${data.confianca}`,
       };
-      
+
       // Salvar no Supabase via Server Action
-      const result = await saveScannedLead(simulatedData);
-      
+      const result = await saveScannedLead(leadData);
+
       if (result.success) {
-        console.log('✅ Lead salvo com ID:', result.lead_id);
+        toast.success('Lead salvo com sucesso', {
+          description: `ID: ${result.lead_id}`,
+        });
       } else {
-        console.error('❌ Erro ao salvar lead:', result.error);
+        toast.error('Erro ao salvar lead', {
+          description: result.message || result.error,
+        });
       }
-      
-      setProcessing(false);
-    }, 3000);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error('Erro ao processar PDF', { description: msg });
+      console.error('❌ Erro no scanner:', error);
+    }
   };
 
   const handleScanComplete = (data: any) => {
@@ -73,30 +85,81 @@ export default function ScannerPDFPage() {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="glass-gold p-6 rounded-2xl border-beam">
-            <div className="text-sm text-gray-400 mb-2 uppercase tracking-wider">PDFs Hoje</div>
-            <div className="text-4xl font-black text-[#D4AF37] mb-1">127</div>
-            <div className="text-xs text-emerald-400">↑ 23 vs. ontem</div>
-          </div>
+        <StatsGrid>
+          <StatsCard
+            label="PDFs Processados"
+            value={scanCount}
+            icon={FileText}
+          />
+          <StatsCard
+            label="Confiança Último"
+            value={extractedData?.confianca || '—'}
+            icon={Target}
+          />
+          <StatsCard
+            label="Caracteres Extraídos"
+            value={extractedData?.total_caracteres?.toLocaleString('pt-BR') || '—'}
+            icon={Clock}
+          />
+        </StatsGrid>
 
-          <div className="glass-gold p-6 rounded-2xl">
-            <div className="text-sm text-gray-400 mb-2 uppercase tracking-wider">Precisão Média</div>
-            <div className="text-4xl font-black text-[#D4AF37] mb-1">98.7%</div>
-            <div className="text-xs text-emerald-400">↑ 0.2% vs. semana</div>
+        {/* Dados Extraídos */}
+        {extractedData && (
+          <div className="rounded-xl border border-[#D4AF37]/20 bg-[#0a0a0a] p-6 mb-8 animate-[fadeIn_0.5s_ease-in-out]">
+            <h2 className="text-2xl font-bold text-[#D4AF37] mb-4" style={{ fontFamily: 'Perpetua Titling MT, serif' }}>
+              DADOS EXTRAÍDOS
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {extractedData.operadora && (
+                <div className="flex justify-between p-3 bg-white/5 rounded-lg">
+                  <span className="text-gray-400">Operadora:</span>
+                  <span className="text-white font-bold">{extractedData.operadora}</span>
+                </div>
+              )}
+              {extractedData.tipo_plano && (
+                <div className="flex justify-between p-3 bg-white/5 rounded-lg">
+                  <span className="text-gray-400">Tipo Plano:</span>
+                  <span className="text-white font-bold">{extractedData.tipo_plano}</span>
+                </div>
+              )}
+              {extractedData.valor_atual != null && (
+                <div className="flex justify-between p-3 bg-white/5 rounded-lg">
+                  <span className="text-gray-400">Valor Atual:</span>
+                  <span className="text-[#D4AF37] font-bold">
+                    R$ {Number(extractedData.valor_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {extractedData.idades.length > 0 && (
+                <div className="flex justify-between p-3 bg-white/5 rounded-lg">
+                  <span className="text-gray-400">Idades:</span>
+                  <span className="text-white font-bold">{extractedData.idades.join(', ')}</span>
+                </div>
+              )}
+              {extractedData.nome_beneficiarios.length > 0 && (
+                <div className="flex justify-between p-3 bg-white/5 rounded-lg col-span-full">
+                  <span className="text-gray-400">Beneficiários:</span>
+                  <span className="text-white font-bold">{extractedData.nome_beneficiarios.join(', ')}</span>
+                </div>
+              )}
+              <div className="flex justify-between p-3 bg-white/5 rounded-lg">
+                <span className="text-gray-400">Confiança:</span>
+                <span className="text-[#D4AF37] font-black text-lg">{extractedData.confianca}</span>
+              </div>
+            </div>
+            {extractedData.texto_extraido_preview && (
+              <div className="mt-4 p-3 bg-white/5 rounded-lg">
+                <p className="text-gray-400 text-xs mb-1">Preview do texto extraído:</p>
+                <p className="text-gray-300 text-xs font-mono line-clamp-3">{extractedData.texto_extraido_preview}</p>
+              </div>
+            )}
           </div>
-
-          <div className="glass-gold p-6 rounded-2xl">
-            <div className="text-sm text-gray-400 mb-2 uppercase tracking-wider">Tempo Médio</div>
-            <div className="text-4xl font-black text-[#D4AF37] mb-1">4.2s</div>
-            <div className="text-xs text-emerald-400">↓ 0.5s vs. semana</div>
-          </div>
-        </div>
+        )}
 
         {/* Último scan */}
         {lastScan && (
-          <div className="glass-dark p-6 rounded-2xl animate-[fadeIn_0.5s_ease-in-out]">
-            <h2 className="text-2xl font-black text-white mb-4 uppercase font-cinzel">Último Processamento</h2>
+          <div className="rounded-xl border border-white/10 bg-[#0a0a0a] p-6 animate-[fadeIn_0.5s_ease-in-out]">
+            <h2 className="text-2xl font-bold text-white mb-4" style={{ fontFamily: 'Perpetua Titling MT, serif' }}>ÚLTIMO PROCESSAMENTO</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex justify-between p-3 bg-white/5 rounded-lg">
                 <span className="text-gray-400">Arquivo:</span>

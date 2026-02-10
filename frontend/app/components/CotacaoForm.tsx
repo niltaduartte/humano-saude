@@ -37,8 +37,8 @@ export default function CotacaoForm({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Carregar operadoras disponíveis
-    apiService.listarOperadoras().then(setOperadoras).catch(console.error);
+    // Carregar operadoras disponíveis via proxy
+    apiService.listarOperadorasProxy().then(setOperadoras).catch(console.error);
   }, []);
 
   // Atualizar quando receber idades do PDF
@@ -106,7 +106,7 @@ export default function CotacaoForm({
 
     try {
       onLoading(true);
-      const resultado = await apiService.calcularCotacao(input);
+      const resultado = await apiService.calcularCotacaoProxy(input);
       onCalculate(resultado);
     } catch (err: any) {
       setError(err.message || 'Erro ao calcular cotação');

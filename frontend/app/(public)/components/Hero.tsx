@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { trackLeadGeneration } from '@/app/lib/metaPixel';
 import { trackGTMLeadSubmission } from '@/app/components/GoogleTagManager';
 import { trackLeadSubmission } from '@/app/components/GoogleAnalytics';
+import { heroLeadSchema, getZodErrors } from '@/lib/validations';
 
 export default function Hero() {
   const [formData, setFormData] = useState({
@@ -33,64 +34,14 @@ export default function Hero() {
     }
   };
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePhone = (phone: string): boolean => {
-    const numbers = phone.replace(/\D/g, '');
-    // Deve ter 10 ou 11 dígitos (com DDD)
-    if (numbers.length < 10 || numbers.length > 11) return false;
-    // Não pode ser todos números iguais
-    if (/^(\d)\1+$/.test(numbers)) return false;
-    // DDD deve ser válido (11-99)
-    const ddd = parseInt(numbers.substring(0, 2));
-    if (ddd < 11 || ddd > 99) return false;
-    return true;
-  };
-
-  const validateName = (name: string): boolean => {
-    // Deve ter pelo menos 3 caracteres
-    if (name.trim().length < 3) return false;
-    // Deve ter pelo menos uma letra
-    if (!/[a-zA-ZÀ-ÿ]/.test(name)) return false;
-    // Não pode ser só números
-    if (/^\d+$/.test(name.trim())) return false;
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    // Validação rigorosa
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.nome.trim()) {
-      newErrors.nome = 'Nome é obrigatório';
-    } else if (!validateName(formData.nome)) {
-      newErrors.nome = 'Nome inválido';
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'E-mail é obrigatório';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'E-mail inválido';
-    }
-    
-    if (!formData.telefone.trim()) {
-      newErrors.telefone = 'Telefone é obrigatório';
-    } else if (!validatePhone(formData.telefone)) {
-      newErrors.telefone = 'Telefone inválido. Ex: (21) 98888-7777';
-    }
-    
-    if (!formData.perfil) {
-      newErrors.perfil = 'Selecione seu perfil';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    // Validação com Zod
+    const result = heroLeadSchema.safeParse(formData);
+    if (!result.success) {
+      setErrors(getZodErrors(result.error));
       return;
     }
 

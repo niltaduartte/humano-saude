@@ -4,7 +4,9 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Rotas protegidas - portal interno
+  // ============================================
+  // PROTEÇÃO: Portal interno (UI)
+  // ============================================
   if (pathname.startsWith('/portal-interno-hks-2026')) {
     const token = request.cookies.get('admin_token')?.value || 
                   request.headers.get('authorization')?.replace('Bearer ', '');
@@ -16,12 +18,38 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Bloquear acesso direto ao /dashboard antigo (redirecionamento de segurança)
+  // ============================================
+  // PROTEÇÃO: Webhooks (validação básica — tokens verificados dentro das routes)
+  // ============================================
+  if (pathname.startsWith('/api/webhooks/')) {
+    const response = NextResponse.next();
+    // Headers de segurança
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    return response;
+  }
+
+  // ============================================
+  // PROTEÇÃO: API routes internas (exceto leads e calculadora públicos)
+  // ============================================
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/leads') && !pathname.startsWith('/api/calculadora') && !pathname.startsWith('/api/webhooks') && !pathname.startsWith('/api/health') && !pathname.startsWith('/api/auth')) {
+    const token = request.cookies.get('admin_token')?.value ||
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+  }
+
+  // ============================================
+  // BLOQUEIO: Rotas legadas
+  // ============================================
   if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Bloquear acesso direto ao /admin antigo
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     return NextResponse.redirect(new URL('/', request.url));
   }
@@ -34,5 +62,6 @@ export const config = {
     '/portal-interno-hks-2026/:path*',
     '/dashboard/:path*',
     '/admin/:path*',
+    '/api/:path*',
   ],
 };

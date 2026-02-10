@@ -26,7 +26,6 @@ import {
   MessageSquare,
   Mail,
   Bell,
-  Phone,
   Settings,
   User,
   Shield,
@@ -34,10 +33,14 @@ import {
   LogOut,
   HelpCircle,
   ChevronRight,
-  X
+  X,
+  Share2,
+  MessagesSquare,
+  Bot,
+  Gauge
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import Logo, { LogoIcon, LogoWithGradientText } from "./Logo"
 
@@ -64,6 +67,12 @@ interface MenuGroup {
 }
 
 // ============================================
+// CONSTANTE BASE - Rota do Portal Interno
+// ============================================
+
+const P = "/portal-interno-hks-2026"
+
+// ============================================
 // MENU ITEMS - 25 ITENS EM 8 GRUPOS
 // ============================================
 
@@ -77,14 +86,14 @@ const menuGroups: MenuGroup[] = [
         id: "dashboard",
         label: "Dashboard",
         icon: LayoutDashboard,
-        href: "/dashboard",
+        href: P,
         description: "Visão geral dos KPIs"
       },
       {
         id: "analytics",
         label: "Analytics",
         icon: TrendingUp,
-        href: "/dashboard/analytics",
+        href: `${P}/analytics`,
         badge: { text: "GA4", variant: "gold" },
         description: "Google Analytics 4"
       },
@@ -92,7 +101,7 @@ const menuGroups: MenuGroup[] = [
         id: "cockpit",
         label: "Cockpit",
         icon: Target,
-        href: "/dashboard/cockpit",
+        href: `${P}/cockpit`,
         description: "Painel de controle"
       }
     ]
@@ -107,7 +116,7 @@ const menuGroups: MenuGroup[] = [
         id: "leads",
         label: "Leads",
         icon: Users,
-        href: "/dashboard/leads",
+        href: `${P}/leads`,
         badge: { text: "12", variant: "danger" },
         description: "Gestão de leads"
       },
@@ -115,28 +124,28 @@ const menuGroups: MenuGroup[] = [
         id: "cotacoes",
         label: "Cotações",
         icon: Receipt,
-        href: "/dashboard/cotacoes",
+        href: `${P}/cotacoes`,
         description: "Cotações de seguros"
       },
       {
         id: "vendas",
         label: "Vendas",
         icon: DollarSign,
-        href: "/dashboard/vendas",
+        href: `${P}/vendas`,
         description: "Pipeline de vendas"
       },
       {
         id: "faturamento",
         label: "Faturamento",
         icon: CreditCard,
-        href: "/dashboard/faturamento",
+        href: `${P}/faturamento`,
         description: "Receitas e comissões"
       },
       {
         id: "financeiro",
         label: "Financeiro",
         icon: Wallet,
-        href: "/dashboard/financeiro",
+        href: `${P}/financeiro`,
         description: "Gestão financeira"
       }
     ]
@@ -151,28 +160,28 @@ const menuGroups: MenuGroup[] = [
         id: "relatorios",
         label: "Relatórios",
         icon: BarChart3,
-        href: "/dashboard/relatorios",
+        href: `${P}/relatorios`,
         description: "Relatórios gerenciais"
       },
       {
         id: "metricas",
         label: "Métricas",
         icon: LineChart,
-        href: "/dashboard/metricas",
+        href: `${P}/metricas`,
         description: "KPIs e indicadores"
       },
       {
         id: "funil",
         label: "Funil de Vendas",
         icon: PieChart,
-        href: "/dashboard/funil",
+        href: `${P}/funil`,
         description: "Análise do funil"
       },
       {
         id: "performance",
         label: "Performance",
         icon: Activity,
-        href: "/dashboard/performance",
+        href: `${P}/performance`,
         description: "Desempenho da equipe"
       }
     ]
@@ -187,7 +196,7 @@ const menuGroups: MenuGroup[] = [
         id: "scanner-ia",
         label: "Scanner IA",
         icon: Sparkles,
-        href: "/dashboard/scanner",
+        href: `${P}/scanner`,
         badge: { text: "Novo", variant: "gold" },
         description: "Extração de PDFs"
       },
@@ -195,23 +204,38 @@ const menuGroups: MenuGroup[] = [
         id: "meta-ads",
         label: "Meta Ads",
         icon: Megaphone,
-        href: "/dashboard/meta-ads",
+        href: `${P}/meta-ads`,
         description: "Campanhas Facebook/Instagram"
       },
       {
         id: "automacao",
         label: "Automação IA",
         icon: BrainCircuit,
-        href: "/dashboard/automacao",
+        href: `${P}/automacao`,
         description: "Workflows inteligentes"
       },
       {
         id: "insights",
         label: "Insights IA",
         icon: Zap,
-        href: "/dashboard/insights",
+        href: `${P}/insights`,
         badge: { text: "Beta", variant: "warning" },
         description: "Análises preditivas"
+      },
+      {
+        id: "regras-ia",
+        label: "Regras IA",
+        icon: Bot,
+        href: `${P}/regras-ia`,
+        description: "Regras de automação IA"
+      },
+      {
+        id: "dashboard-ia",
+        label: "Dashboard IA",
+        icon: Gauge,
+        href: `${P}/ai-performance/dashboard-ia`,
+        badge: { text: "Novo", variant: "gold" },
+        description: "Performance dos módulos IA"
       }
     ]
   },
@@ -225,28 +249,28 @@ const menuGroups: MenuGroup[] = [
         id: "clientes",
         label: "Clientes",
         icon: UsersRound,
-        href: "/dashboard/clientes",
+        href: `${P}/clientes`,
         description: "Base de clientes"
       },
       {
         id: "contratos",
         label: "Contratos",
         icon: FileText,
-        href: "/dashboard/contratos",
+        href: `${P}/contratos`,
         description: "Gestão de contratos"
       },
       {
         id: "documentos",
         label: "Documentos",
         icon: Archive,
-        href: "/dashboard/documentos",
+        href: `${P}/documentos`,
         description: "Biblioteca de documentos"
       },
       {
         id: "tarefas",
         label: "Tarefas",
         icon: ClipboardList,
-        href: "/dashboard/tarefas",
+        href: `${P}/tarefas`,
         badge: { text: "5", variant: "warning" },
         description: "Gestão de tarefas"
       }
@@ -262,7 +286,7 @@ const menuGroups: MenuGroup[] = [
         id: "whatsapp",
         label: "WhatsApp",
         icon: MessageSquare,
-        href: "/dashboard/whatsapp",
+        href: `${P}/whatsapp`,
         badge: { text: "8", variant: "success" },
         description: "Mensagens WhatsApp"
       },
@@ -270,23 +294,30 @@ const menuGroups: MenuGroup[] = [
         id: "email",
         label: "E-mail",
         icon: Mail,
-        href: "/dashboard/email",
+        href: `${P}/email`,
         description: "Campanhas de e-mail"
       },
       {
         id: "notificacoes",
         label: "Notificações",
         icon: Bell,
-        href: "/dashboard/notificacoes",
+        href: `${P}/notificacoes`,
         badge: { text: "3", variant: "danger" },
         description: "Central de notificações"
       },
       {
-        id: "telefonia",
-        label: "Telefonia",
-        icon: Phone,
-        href: "/dashboard/telefonia",
-        description: "Sistema de telefonia"
+        id: "social",
+        label: "Social Media",
+        icon: Share2,
+        href: `${P}/social`,
+        description: "Gestão de redes sociais"
+      },
+      {
+        id: "chat",
+        label: "Chat Equipe",
+        icon: MessagesSquare,
+        href: `${P}/chat`,
+        description: "Chat interno da equipe"
       }
     ]
   },
@@ -300,28 +331,28 @@ const menuGroups: MenuGroup[] = [
         id: "configuracoes",
         label: "Configurações",
         icon: Settings,
-        href: "/dashboard/configuracoes",
+        href: `${P}/configuracoes`,
         description: "Configurações do sistema"
       },
       {
         id: "perfil",
         label: "Perfil",
         icon: User,
-        href: "/dashboard/perfil",
+        href: `${P}/perfil`,
         description: "Meu perfil"
       },
       {
         id: "seguranca",
         label: "Segurança",
         icon: Shield,
-        href: "/dashboard/seguranca",
+        href: `${P}/seguranca`,
         description: "Segurança e privacidade"
       },
       {
         id: "integracao",
         label: "Integrações",
         icon: Database,
-        href: "/dashboard/integracoes",
+        href: `${P}/integracoes`,
         description: "APIs e integrações"
       }
     ]
@@ -366,8 +397,18 @@ export default function DockSidebar() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
 
   const isActive = (href: string) => pathname === href
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+    } catch {
+      // Mesmo se falhar, redireciona
+    }
+    router.push("/admin-login")
+  }
 
   return (
     <>
@@ -522,39 +563,52 @@ export default function DockSidebar() {
         <div className="border-t border-white/10 p-2 space-y-1">
           {footerItems.map((item) => {
             const Icon = item.icon
+            const isLogout = item.id === "sair"
+
+            const content = (
+              <motion.div
+                whileHover={{ x: isExpanded ? 4 : 0, scale: isExpanded ? 1 : 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all duration-200 group cursor-pointer"
+              >
+                <div className="flex-shrink-0 text-white/60 group-hover:text-[#F6E05E] transition-colors">
+                  <Icon className="h-5 w-5" />
+                </div>
+
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-sm font-medium text-white/80 group-hover:text-white transition-colors"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+
+                {/* Tooltip */}
+                {!isExpanded && (
+                  <div className="absolute left-full ml-2 px-3 py-2 bg-[#050505] border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50">
+                    <p className="text-sm font-medium text-white">{item.label}</p>
+                  </div>
+                )}
+              </motion.div>
+            )
+
+            if (isLogout) {
+              return (
+                <div key={item.id} onClick={handleLogout}>
+                  {content}
+                </div>
+              )
+            }
 
             return (
               <Link key={item.id} href={item.href}>
-                <motion.div
-                  whileHover={{ x: isExpanded ? 4 : 0, scale: isExpanded ? 1 : 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all duration-200 group"
-                >
-                  <div className="flex-shrink-0 text-white/60 group-hover:text-[#F6E05E] transition-colors">
-                    <Icon className="h-5 w-5" />
-                  </div>
-
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.span
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-sm font-medium text-white/80 group-hover:text-white transition-colors"
-                      >
-                        {item.label}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Tooltip */}
-                  {!isExpanded && (
-                    <div className="absolute left-full ml-2 px-3 py-2 bg-[#050505] border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50">
-                      <p className="text-sm font-medium text-white">{item.label}</p>
-                    </div>
-                  )}
-                </motion.div>
+                {content}
               </Link>
             )
           })}
@@ -672,6 +726,24 @@ export default function DockSidebar() {
               <div className="border-t border-white/10 p-2 space-y-1">
                 {footerItems.map((item) => {
                   const Icon = item.icon
+                  const isLogout = item.id === "sair"
+
+                  const content = (
+                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+                      <Icon className="h-5 w-5 text-white/60" />
+                      <span className="text-sm font-medium text-white/80">
+                        {item.label}
+                      </span>
+                    </div>
+                  )
+
+                  if (isLogout) {
+                    return (
+                      <div key={item.id} onClick={() => { setIsMobileOpen(false); handleLogout() }}>
+                        {content}
+                      </div>
+                    )
+                  }
 
                   return (
                     <Link
@@ -679,12 +751,7 @@ export default function DockSidebar() {
                       href={item.href}
                       onClick={() => setIsMobileOpen(false)}
                     >
-                      <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors">
-                        <Icon className="h-5 w-5 text-white/60" />
-                        <span className="text-sm font-medium text-white/80">
-                          {item.label}
-                        </span>
-                      </div>
+                      {content}
                     </Link>
                   )
                 })}

@@ -1,5 +1,8 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Proxy routes (Next.js API) - use these from client components
+const PROXY_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
+
 export interface CotacaoInput {
   idades: number[];
   tipo: string;
@@ -80,5 +83,72 @@ export const apiService = {
     }
 
     return response.json();
+  },
+
+  /**
+   * Health check consolidado (via proxy Next.js)
+   */
+  async healthCheckAll(): Promise<{
+    status: string;
+    timestamp: string;
+    services: Record<string, { status: string; latency?: number; error?: string }>;
+  }> {
+    const response = await fetch(`${PROXY_BASE}/api/health`);
+    return response.json();
+  },
+
+  /**
+   * Calcular cotação via proxy Next.js (evita CORS)
+   */
+  async calcularCotacaoProxy(input: CotacaoInput): Promise<CotacaoOutput> {
+    const response = await fetch(`${PROXY_BASE}/api/cotacao`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Erro ao calcular cotação');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Listar operadoras via proxy Next.js (evita CORS)
+   */
+  async listarOperadorasProxy(): Promise<string[]> {
+    const response = await fetch(`${PROXY_BASE}/api/cotacao`);
+    if (!response.ok) throw new Error('Erro ao listar operadoras');
+    const data = await response.json();
+    return data.operadoras;
+  },
+
+  /**
+   * Extrair PDF via proxy Next.js (evita CORS)
+   */
+  async extrairPDFProxy(file: File): Promise<PDFExtraido> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${PROXY_BASE}/api/pdf`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Erro ao processar PDF');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Logout do admin
+   */
+  async logout(): Promise<void> {
+    await fetch(`${PROXY_BASE}/api/auth/logout`, { method: 'POST' });
   },
 };

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { trackGTMCalculation } from '@/app/components/GoogleTagManager';
-import { trackCalculation } from '@/app/components/GoogleAnalytics';
+import { trackGTMCalculation, trackGTMLeadSubmission } from '@/app/components/GoogleTagManager';
+import { trackCalculation, trackLeadSubmission } from '@/app/components/GoogleAnalytics';
+import { trackLeadGeneration, trackQuoteStart } from '@/app/lib/metaPixel';
+import { calculatorLeadSchema, getZodErrors } from '@/lib/validations';
 import type { CalculadoraState, PlanoResultado, Beneficiario } from './Calculator.types';
 
 export default function CalculatorWizard() {
@@ -19,6 +21,7 @@ export default function CalculatorWizard() {
     resultados: [],
     isLoading: false,
   });
+  const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
 
   const faixasEtarias = [
     '0-18', '19-23', '24-28', '29-33', '34-38',
@@ -65,7 +68,27 @@ export default function CalculatorWizard() {
   };
 
   const calcularPlanos = async () => {
+    // Validar dados de contato com Zod
+    const validation = calculatorLeadSchema.safeParse({
+      nome: state.nome,
+      email: state.email,
+      telefone: state.telefone,
+      perfil: state.tipoContrato,
+    });
+
+    if (!validation.success) {
+      setContactErrors(getZodErrors(validation.error));
+      return;
+    }
+
+    setContactErrors({});
     setState(prev => ({ ...prev, isLoading: true }));
+
+    // Meta Pixel: rastrear início da cotação
+    trackQuoteStart({
+      tipoContratacao: state.tipoContrato,
+      idades: state.beneficiarios.map(b => parseInt(b.idade) || 0),
+    });
 
     const idades = state.beneficiarios.map(b => b.idade).filter(Boolean);
 
@@ -141,6 +164,30 @@ export default function CalculatorWizard() {
           bairro: state.bairro,
           top_3_planos: state.resultados.slice(0, 3).map(p => p.nome),
         }),
+      });
+
+      // ✅ Meta Pixel: rastrear lead gerado na calculadora
+      trackLeadGeneration({
+        leadId: `calc-${Date.now()}`,
+        nome: state.nome,
+        operadora: state.resultados[0]?.operadora || 'N/A',
+        valorProposto: state.resultados[0]?.valorTotal || 0,
+        economiaEstimada: 0,
+      });
+
+      // ✅ GTM: rastrear envio de lead
+      trackGTMLeadSubmission({
+        nome: state.nome,
+        email: state.email,
+        telefone: state.telefone,
+        perfil: state.tipoContrato,
+      });
+
+      // ✅ GA: rastrear envio de lead
+      trackLeadSubmission({
+        nome: state.nome,
+        perfil: state.tipoContrato,
+        source: 'calculator_wizard',
       });
 
       window.location.href = '/obrigado';
@@ -379,10 +426,11 @@ export default function CalculatorWizard() {
                 <input
                   type="text"
                   value={state.nome}
-                  onChange={(e) => setState(prev => ({ ...prev, nome: e.target.value }))}
+                  onChange={(e) => { setState(prev => ({ ...prev, nome: e.target.value })); setContactErrors(prev => ({ ...prev, nome: '' })); }}
                   placeholder="Digite seu nome"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#bf953f]"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#bf953f] ${contactErrors.nome ? 'border-red-400' : 'border-gray-300'}`}
                 />
+                {contactErrors.nome && <p className="text-red-500 text-xs mt-1">{contactErrors.nome}</p>}
               </div>
 
               <div>
@@ -390,10 +438,11 @@ export default function CalculatorWizard() {
                 <input
                   type="email"
                   value={state.email}
-                  onChange={(e) => setState(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => { setState(prev => ({ ...prev, email: e.target.value })); setContactErrors(prev => ({ ...prev, email: '' })); }}
                   placeholder="seu@email.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#bf953f]"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#bf953f] ${contactErrors.email ? 'border-red-400' : 'border-gray-300'}`}
                 />
+                {contactErrors.email && <p className="text-red-500 text-xs mt-1">{contactErrors.email}</p>}
               </div>
 
               <div>
@@ -401,10 +450,11 @@ export default function CalculatorWizard() {
                 <input
                   type="tel"
                   value={state.telefone}
-                  onChange={(e) => setState(prev => ({ ...prev, telefone: e.target.value }))}
+                  onChange={(e) => { setState(prev => ({ ...prev, telefone: e.target.value })); setContactErrors(prev => ({ ...prev, telefone: '' })); }}
                   placeholder="(21) 99999-9999"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#bf953f]"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#bf953f] ${contactErrors.telefone ? 'border-red-400' : 'border-gray-300'}`}
                 />
+                {contactErrors.telefone && <p className="text-red-500 text-xs mt-1">{contactErrors.telefone}</p>}
               </div>
             </div>
 

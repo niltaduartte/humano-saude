@@ -7,8 +7,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Upload, FileText, CheckCircle2, XCircle, Sparkles, Loader2 } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
 interface PDFExtraido {
   idades: number[];
   operadora: string | null;
@@ -79,7 +77,7 @@ export default function ScannerPDF({ onDadosExtraidos }: ScannerPDFProps) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/pdf/extrair`, {
+      const response = await fetch('/api/pdf', {
         method: 'POST',
         body: formData,
       });

@@ -1,4 +1,45 @@
+'use client';
+
+import { useEffect } from 'react';
+import { trackLeadGeneration } from '@/app/lib/metaPixel';
+import { trackGTMEvent } from '@/app/components/GoogleTagManager';
+import { trackEvent } from '@/app/components/GoogleAnalytics';
+
 export default function ObrigadoPage() {
+  useEffect(() => {
+    // ✅ Meta Pixel: conversão de lead
+    trackLeadGeneration({
+      leadId: `conversion-${Date.now()}`,
+      nome: 'Conversão Landing Page',
+      operadora: 'N/A',
+      economiaEstimada: 0,
+    });
+
+    // ✅ Google Tag Manager: evento de conversão
+    trackGTMEvent('conversion', {
+      event_category: 'Lead',
+      event_label: 'Thank You Page',
+      send_to: 'conversion',
+    });
+
+    // ✅ Google Analytics: evento de conversão
+    trackEvent('generate_lead', {
+      event_category: 'Lead',
+      event_label: 'thank_you_page',
+      value: 1,
+      currency: 'BRL',
+    });
+
+    // ✅ Meta Pixel: evento de page view específico (obrigado)
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'CompleteRegistration', {
+        content_name: 'Cotação Solicitada',
+        content_category: 'Lead Conversion',
+        status: 'completed',
+      });
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center px-6">
       <div className="max-w-2xl w-full text-center">
