@@ -13,17 +13,18 @@ declare global {
 export default function MetaPixel() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
   useEffect(() => {
-    // Rastrear mudanças de página (SPA navigation)
     if (typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'PageView');
     }
   }, [pathname, searchParams]);
 
+  if (!pixelId) return null;
+
   return (
     <>
-      {/* Meta Pixel Script */}
       <Script
         id="meta-pixel"
         strategy="afterInteractive"
@@ -37,19 +38,17 @@ export default function MetaPixel() {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '1572724200440814');
+            fbq('init', '${pixelId}');
             fbq('track', 'PageView');
           `,
         }}
       />
-
-      {/* Fallback noscript para quando JavaScript está desabilitado */}
       <noscript>
         <img
           height="1"
           width="1"
           style={{ display: 'none' }}
-          src="https://www.facebook.com/tr?id=1572724200440814&ev=PageView&noscript=1"
+          src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
           alt=""
         />
       </noscript>

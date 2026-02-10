@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Megaphone, Eye, MousePointer, DollarSign, Target, TrendingUp, BarChart3 } from 'lucide-react';
+import { Megaphone, Eye, MousePointer, DollarSign, Target, TrendingUp, BarChart3, Rocket, Gauge, Sparkles } from 'lucide-react';
 import { getAdsCampaigns, getAdsStats, getAnaliseCampanhas } from '@/app/actions/ads';
+import Link from 'next/link';
 
 export default function MetaAdsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -39,6 +40,40 @@ export default function MetaAdsPage() {
           META ADS
         </h1>
         <p className="mt-2 text-gray-400">Gestão de campanhas Facebook & Instagram Ads</p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <Link
+          href="/portal-interno-hks-2026/meta-ads/cockpit"
+          className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0a0a0a] p-4 transition-colors hover:border-[#D4AF37]/40 hover:bg-[#0a0a0a]/80"
+        >
+          <Gauge className="h-8 w-8 text-[#D4AF37]" />
+          <div>
+            <p className="text-sm font-semibold text-white">Cockpit Live</p>
+            <p className="text-xs text-gray-400">Métricas em tempo real da Marketing API</p>
+          </div>
+        </Link>
+        <Link
+          href="/portal-interno-hks-2026/meta-ads/lancamento"
+          className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0a0a0a] p-4 transition-colors hover:border-[#D4AF37]/40 hover:bg-[#0a0a0a]/80"
+        >
+          <Rocket className="h-8 w-8 text-green-400" />
+          <div>
+            <p className="text-sm font-semibold text-white">Lançar Campanha</p>
+            <p className="text-xs text-gray-400">Criar campanha completa + copy IA</p>
+          </div>
+        </Link>
+        <Link
+          href="/portal-interno-hks-2026/meta-ads/lancamento"
+          className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#0a0a0a] p-4 transition-colors hover:border-[#D4AF37]/40 hover:bg-[#0a0a0a]/80"
+        >
+          <Sparkles className="h-8 w-8 text-purple-400" />
+          <div>
+            <p className="text-sm font-semibold text-white">Copy Generator</p>
+            <p className="text-xs text-gray-400">Gerar textos para anúncios com GPT-4o</p>
+          </div>
+        </Link>
       </div>
 
       {loading ? (
