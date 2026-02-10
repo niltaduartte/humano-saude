@@ -51,6 +51,18 @@ import {
   Database,
   Bell,
   Send,
+  // Novos ícones para itens restaurados
+  Brain,
+  Lightbulb,
+  ScanLine,
+  CheckSquare,
+  FileArchive,
+  Wallet,
+  Receipt,
+  Award,
+  Phone,
+  Plug,
+  Filter,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -77,7 +89,7 @@ interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>
   href?: string
   badge?: { text: string; variant: BadgeVariant }
-  color?: "blue" | "green"
+  color?: "blue" | "green" | "gold"
   children?: SubItem[]
 }
 
@@ -92,63 +104,106 @@ const P = "/portal-interno-hks-2026"
 // ============================================
 
 const sidebarItems: SidebarItem[] = [
+  // ── VISÃO GERAL ──
   {
-    id: "analytics",
+    id: "visao-geral",
+    label: "Visão Geral",
+    icon: LayoutDashboard,
+    href: P,
+    color: "green",
+  },
+
+  // ── ANALYTICS & COCKPIT ──
+  {
+    id: "analytics-hub",
     label: "Analytics",
     icon: TrendingUp,
-    href: `${P}/analytics`,
-    badge: { text: "GA4", variant: "danger" },
+    children: [
+      { id: "analytics-ga4", label: "Google Analytics", icon: TrendingUp, href: `${P}/analytics`, badge: { text: "GA4", variant: "danger" } },
+      { id: "analytics-metricas", label: "Métricas & KPIs", icon: LineChart, href: `${P}/metricas`, badge: { text: "NOVO", variant: "gold" } },
+      { id: "analytics-performance", label: "Performance", icon: Award, href: `${P}/performance` },
+      { id: "analytics-relatorios", label: "Relatórios", icon: BarChart3, href: `${P}/relatorios` },
+    ],
   },
   {
     id: "cockpit",
     label: "Cockpit",
     icon: Target,
     children: [
+      { id: "cockpit-principal", label: "Painel de Controle", icon: Gauge, href: `${P}/cockpit` },
       { id: "cockpit-campanhas", label: "Campanhas", icon: Crosshair, href: `${P}/cockpit/campanhas` },
       { id: "cockpit-consolidado", label: "Consolidado", icon: BarChart3, href: `${P}/cockpit/consolidado`, badge: { text: "NOVO", variant: "danger" } },
     ],
   },
+
+  // ── FUNIL & VENDAS ──
   {
-    id: "ai-performance",
-    label: "AI Performance",
-    icon: BrainCircuit,
+    id: "funil-vendas",
+    label: "Funil de Vendas",
+    icon: Filter,
+    color: "gold",
     children: [
-      { id: "ai-dashboard", label: "Dashboard IA", icon: Gauge, href: `${P}/ai-performance/dashboard-ia` },
-      { id: "ai-escala", label: "Escala Automática", icon: Scale, href: `${P}/ai-performance/escala-automatica` },
-      { id: "ai-regras", label: "Regras de Alerta", icon: ShieldAlert, href: `${P}/ai-performance/regras-alerta` },
-      { id: "ai-publicos", label: "Públicos", icon: UsersRound, href: `${P}/ai-performance/publicos` },
-      { id: "ai-config-meta", label: "Configurações Meta", icon: Settings, href: `${P}/ai-performance/configuracoes-meta` },
+      { id: "funil-pipeline", label: "Pipeline Visual", icon: Filter, href: `${P}/funil`, badge: { text: "🔥", variant: "gold" } },
+      { id: "funil-leads", label: "Leads (CRM)", icon: Users, href: `${P}/leads`, badge: { text: "12", variant: "danger" } },
+      { id: "funil-cotacoes", label: "Cotações", icon: Receipt, href: `${P}/cotacoes` },
+      { id: "funil-vendas-page", label: "Vendas", icon: DollarSign, href: `${P}/vendas` },
+      { id: "funil-contratos", label: "Contratos", icon: FileText, href: `${P}/contratos` },
     ],
   },
+
+  // ── IA & INTELIGÊNCIA ──
+  {
+    id: "ia-hub",
+    label: "Inteligência IA",
+    icon: BrainCircuit,
+    color: "gold",
+    children: [
+      { id: "ia-dashboard", label: "Dashboard IA", icon: Gauge, href: `${P}/ai-performance/dashboard-ia` },
+      { id: "ia-insights", label: "Insights Preditivos", icon: Lightbulb, href: `${P}/insights`, badge: { text: "Beta", variant: "warning" } },
+      { id: "ia-scanner", label: "Scanner PDF", icon: ScanLine, href: `${P}/scanner`, badge: { text: "IA", variant: "gold" } },
+      { id: "ia-regras", label: "Regras de IA", icon: Brain, href: `${P}/regras-ia` },
+      { id: "ia-escala", label: "Escala Automática", icon: Scale, href: `${P}/ai-performance/escala-automatica` },
+      { id: "ia-alertas", label: "Regras de Alerta", icon: ShieldAlert, href: `${P}/ai-performance/regras-alerta` },
+      { id: "ia-publicos", label: "Públicos IA", icon: UsersRound, href: `${P}/ai-performance/publicos` },
+    ],
+  },
+
+  // ── META ADS ──
+  {
+    id: "meta-ads",
+    label: "Meta Ads",
+    icon: Megaphone,
+    color: "blue",
+    children: [
+      { id: "meta-visao", label: "Visão Geral", icon: LayoutDashboard, href: `${P}/meta-ads` },
+      { id: "meta-cockpit", label: "Cockpit Live", icon: Zap, href: `${P}/meta-ads/cockpit` },
+      { id: "meta-lancamento", label: "Lançar Campanha", icon: Target, href: `${P}/meta-ads/lancamento` },
+      { id: "meta-campanhas", label: "Campanhas", icon: Target, href: `${P}/meta-ads/campanhas` },
+      { id: "meta-criativos", label: "Criativos", icon: Palette, href: `${P}/meta-ads/criativos` },
+      { id: "meta-demografico", label: "Demográfico", icon: PieChart, href: `${P}/meta-ads/demografico` },
+      { id: "meta-historico", label: "Histórico", icon: Clock, href: `${P}/meta-ads/historico` },
+      { id: "meta-config", label: "Config. Meta", icon: Settings, href: `${P}/ai-performance/configuracoes-meta` },
+    ],
+  },
+
+  // ── AUTOMAÇÃO ──
   {
     id: "automacao",
     label: "Automação",
     icon: Sparkles,
     children: [
+      { id: "auto-central", label: "Central", icon: Sparkles, href: `${P}/automacao` },
       { id: "auto-carrinhos", label: "Carrinhos Abandonados", icon: ShoppingCart, href: `${P}/automacao/carrinhos-abandonados` },
       { id: "auto-sala", label: "Sala de Recuperação", icon: LifeBuoy, href: `${P}/automacao/sala-recuperacao` },
       { id: "auto-tracking", label: "Tracking Dashboard", icon: Activity, href: `${P}/automacao/tracking-dashboard` },
       { id: "auto-links", label: "Links Rastreáveis", icon: Link2, href: `${P}/automacao/links-rastreaveis` },
-      { id: "auto-mensagens", label: "Mensagens Rastreáveis", icon: MessageSquare, href: `${P}/automacao/mensagens-rastreaveis` },
       { id: "auto-jornada", label: "Jornada de Compra", icon: Route, href: `${P}/automacao/jornada-compra` },
       { id: "auto-pixel", label: "Disparos de Pixel", icon: Radar, href: `${P}/automacao/disparos-pixel` },
-      { id: "auto-webhook-disparos", label: "Disparos de Webhook", icon: Zap, href: `${P}/automacao/disparos-webhook` },
-      { id: "auto-config", label: "Config. Tracking", icon: Wrench, href: `${P}/automacao/config-tracking` },
       { id: "auto-webhooks", label: "Webhooks", icon: Webhook, href: `${P}/automacao/webhooks` },
     ],
   },
-  {
-    id: "configuracoes",
-    label: "Configurações",
-    icon: Cog,
-    children: [
-      { id: "config-geral", label: "Geral", icon: Settings, href: `${P}/configuracoes` },
-      { id: "config-perfil", label: "Perfil", icon: User, href: `${P}/perfil` },
-      { id: "config-seguranca", label: "Segurança", icon: Shield, href: `${P}/seguranca` },
-      { id: "config-integracoes", label: "Integrações", icon: Database, href: `${P}/integracoes` },
-      { id: "config-notificacoes", label: "Notificações", icon: Bell, href: `${P}/notificacoes` },
-    ],
-  },
+
+  // ── SOCIAL FLOW ──
   {
     id: "social-flow",
     label: "Social Flow",
@@ -161,64 +216,55 @@ const sidebarItems: SidebarItem[] = [
       { id: "sf-config", label: "Configurações", icon: Settings, href: `${P}/social-flow/settings` },
     ],
   },
-  {
-    id: "emails",
-    label: "E-mails",
-    icon: Mail,
-    children: [
-      { id: "email-inbox", label: "Inbox", icon: Mail, href: `${P}/email` },
-      { id: "email-campanhas", label: "Campanhas", icon: Megaphone, href: `${P}/email/campanhas` },
-      { id: "email-templates", label: "Templates", icon: FileText, href: `${P}/email/templates` },
-    ],
-  },
+
+  // ── GESTÃO & CLIENTES ──
   {
     id: "gestao",
     label: "Gestão",
     icon: UsersRound,
     children: [
-      { id: "gestao-crm", label: "CRM", icon: UsersRound, href: `${P}/leads` },
       { id: "gestao-clientes", label: "Clientes", icon: Users, href: `${P}/clientes` },
-      { id: "gestao-produtos", label: "Produtos", icon: Package, href: `${P}/cotacoes` },
-      { id: "gestao-cupons", label: "Cupons", icon: Ticket, href: `${P}/contratos` },
-      { id: "gestao-pagamentos", label: "Pagamentos", icon: CreditCard, href: `${P}/financeiro` },
-      { id: "gestao-relatorios", label: "Relatórios", icon: BarChart3, href: `${P}/relatorios` },
+      { id: "gestao-documentos", label: "Documentos", icon: FileArchive, href: `${P}/documentos` },
+      { id: "gestao-tarefas", label: "Tarefas", icon: CheckSquare, href: `${P}/tarefas`, badge: { text: "5", variant: "warning" } },
     ],
   },
+
+  // ── FINANCEIRO ──
   {
-    id: "meta-ads",
-    label: "Meta Ads",
-    icon: Eye,
-    color: "blue",
+    id: "financeiro",
+    label: "Financeiro",
+    icon: Wallet,
     children: [
-      { id: "meta-visao", label: "Visão Geral", icon: LayoutDashboard, href: `${P}/meta-ads` },
-      { id: "meta-cockpit", label: "Cockpit Live", icon: Zap, href: `${P}/meta-ads/cockpit` },
-      { id: "meta-lancamento", label: "Lançar Campanha", icon: Target, href: `${P}/meta-ads/lancamento` },
-      { id: "meta-campanhas", label: "Campanhas", icon: Target, href: `${P}/meta-ads/campanhas` },
-      { id: "meta-criativos", label: "Criativos", icon: Palette, href: `${P}/meta-ads/criativos` },
-      { id: "meta-historico", label: "Histórico", icon: Clock, href: `${P}/meta-ads/historico` },
-      { id: "meta-demografico", label: "Demográfico", icon: PieChart, href: `${P}/meta-ads/demografico` },
+      { id: "fin-visao", label: "Visão Geral", icon: DollarSign, href: `${P}/financeiro` },
+      { id: "fin-faturamento", label: "Faturamento", icon: CreditCard, href: `${P}/faturamento` },
     ],
   },
+
+  // ── COMUNICAÇÃO ──
   {
-    id: "vendas",
-    label: "Vendas",
-    icon: DollarSign,
-    href: `${P}/vendas`,
-  },
-  {
-    id: "visao-geral",
-    label: "Visão Geral",
-    icon: LayoutDashboard,
-    href: P,
-    color: "green",
-  },
-  {
-    id: "whatsapp",
-    label: "WhatsApp",
+    id: "comunicacao",
+    label: "Comunicação",
     icon: MessagesSquare,
-    href: `${P}/whatsapp`,
     color: "green",
-    badge: { text: "8", variant: "success" },
+    children: [
+      { id: "com-whatsapp", label: "WhatsApp", icon: MessagesSquare, href: `${P}/whatsapp`, badge: { text: "8", variant: "success" } },
+      { id: "com-chat", label: "Chat Equipe", icon: MessageSquare, href: `${P}/chat`, badge: { text: "NOVO", variant: "gold" } },
+      { id: "com-email", label: "E-mail", icon: Mail, href: `${P}/email` },
+      { id: "com-notificacoes", label: "Notificações", icon: Bell, href: `${P}/notificacoes`, badge: { text: "3", variant: "danger" } },
+    ],
+  },
+
+  // ── CONFIGURAÇÕES ──
+  {
+    id: "configuracoes",
+    label: "Configurações",
+    icon: Cog,
+    children: [
+      { id: "config-geral", label: "Geral", icon: Settings, href: `${P}/configuracoes` },
+      { id: "config-perfil", label: "Perfil", icon: User, href: `${P}/perfil` },
+      { id: "config-seguranca", label: "Segurança", icon: Shield, href: `${P}/seguranca` },
+      { id: "config-integracoes", label: "Integrações", icon: Plug, href: `${P}/integracoes` },
+    ],
   },
 ]
 
@@ -252,6 +298,14 @@ function resolveColors(item: SidebarItem, isHighlighted: boolean) {
       icon: isHighlighted ? "text-green-400" : "text-white/50",
       text: isHighlighted ? "text-green-400" : "text-white/70",
       childActive: "bg-green-600/15 text-green-300",
+    }
+  }
+  if (item.color === "gold") {
+    return {
+      parentBg: isHighlighted ? "bg-[#D4AF37]/15 border border-[#D4AF37]/30" : "border border-transparent hover:bg-white/5",
+      icon: isHighlighted ? "text-[#D4AF37]" : "text-white/50",
+      text: isHighlighted ? "text-[#D4AF37]" : "text-white/70",
+      childActive: "bg-[#D4AF37]/15 text-[#F4D03F]",
     }
   }
   return {
