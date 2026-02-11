@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Buscar dados do corretor
     const { data: corretor, error: corretorErr } = await supabase
       .from('corretores')
-      .select('id, nome, cpf, email, telefone, whatsapp, susep, data_admissao, metadata, created_at')
+      .select('id, nome, cpf, email, telefone, whatsapp, susep, slug, data_admissao, metadata, created_at')
       .eq('id', corretorId)
       .eq('ativo', true)
       .single();
@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
         telefone: corretor.telefone,
         whatsapp: corretor.whatsapp,
         susep: corretor.susep,
+        slug: corretor.slug || null,
         data_admissao: corretor.data_admissao,
         created_at: corretor.created_at,
         metadata: corretor.metadata || {},
@@ -82,8 +83,54 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, senha_atual, nova_senha } = body;
+    const { email, senha_atual, nova_senha, slug } = body;
     const supabase = createServiceClient();
+
+    // ── Atualizar slug (link de indicação) ────
+    if (slug !== undefined) {
+      const slugNorm = slug
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 60);
+
+      if (slugNorm.length < 3) {
+        return NextResponse.json({ error: 'O slug deve ter pelo menos 3 caracteres' }, { status: 400 });
+      }
+
+      // Palavras reservadas
+      const reservados = ['admin', 'api', 'login', 'dashboard', 'teste', 'test', 'humano', 'saude', 'humanosaude'];
+      if (reservados.includes(slugNorm)) {
+        return NextResponse.json({ error: 'Este nome não está disponível' }, { status: 400 });
+      }
+
+      // Verificar se já existe outro corretor com esse slug
+      const { data: existente } = await supabase
+        .from('corretores')
+        .select('id')
+        .eq('slug', slugNorm)
+        .neq('id', corretorId)
+        .single();
+
+      if (existente) {
+        return NextResponse.json({ error: 'Este link já está em uso. Tente outro nome.' }, { status: 409 });
+      }
+
+      const { error: updateErr } = await supabase
+        .from('corretores')
+        .update({ slug: slugNorm })
+        .eq('id', corretorId);
+
+      if (updateErr) {
+        console.error('[perfil PATCH slug]', updateErr);
+        return NextResponse.json({ error: 'Erro ao salvar link' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, slug: slugNorm, message: 'Link criado com sucesso!' });
+    }
 
     // ── Atualizar e-mail ──────────────────────
     if (email) {

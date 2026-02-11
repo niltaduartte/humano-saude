@@ -75,25 +75,5 @@ CREATE POLICY "service_role_all_leads_indicacao"
   USING (true)
   WITH CHECK (true);
 
--- Corretor autenticado só vê seus próprios leads
-CREATE POLICY "corretor_select_own_leads"
-  ON leads_indicacao FOR SELECT
-  USING (
-    corretor_id IN (
-      SELECT id FROM corretores WHERE user_id = auth.uid()
-    )
-  );
-
--- Corretor pode atualizar status dos seus leads
-CREATE POLICY "corretor_update_own_leads"
-  ON leads_indicacao FOR UPDATE
-  USING (
-    corretor_id IN (
-      SELECT id FROM corretores WHERE user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    corretor_id IN (
-      SELECT id FROM corretores WHERE user_id = auth.uid()
-    )
-  );
+-- Segurança: o filtro por corretor_id é feito nas server actions
+-- usando service_role, não via auth.uid() (corretores não usam Supabase Auth)
