@@ -21,11 +21,11 @@ const LOGO_120 = 'https://humanosaude.com.br/images/logos/logo%20humano%20saude%
 // ─── Layout base dos emails ────────────────────────────────
 function emailLayout(content: string, showSpamWarning = false): string {
   const spamBlock = showSpamWarning ? `
-    <div style="background-color:#FFF3CD;border:1px solid #FFECB5;border-radius:12px;padding:16px;margin-top:20px;">
+    <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:16px;margin-top:20px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="24" valign="top" style="padding-right:10px;">⚠️</td>
-          <td style="color:#856404;font-size:13px;line-height:1.5;">
+          <td style="color:#D4AF37;font-size:13px;line-height:1.5;">
             <strong>Importante:</strong> Nossos e-mails podem cair na pasta <strong>Spam/Lixo Eletrônico</strong>. 
             Fique de olho e marque como "Não é spam" para receber os próximos comunicados normalmente.
           </td>
@@ -40,17 +40,24 @@ function emailLayout(content: string, showSpamWarning = false): string {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="color-scheme" content="dark">
+      <meta name="supported-color-schemes" content="dark">
+      <style>
+        :root { color-scheme: dark; supported-color-schemes: dark; }
+        [data-ogsb] { background-color: inherit !important; }
+        a[x-apple-data-detectors] { color: inherit !important; }
+      </style>
     </head>
-    <body style="margin:0;padding:0;background-color:#FFFFFF;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+    <body style="margin:0;padding:0;background-color:#0A0A0A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;" data-ogsb="true">
       <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
         
         <!-- Header com logo -->
-        <div style="text-align:center;margin-bottom:28px;background-color:#050505;border-radius:16px;padding:24px 16px;">
+        <div style="text-align:center;margin-bottom:28px;background-color:#050505;border-radius:16px;padding:24px 16px;" data-ogsb="true">
           <img src="${LOGO_PRINCIPAL}" alt="Humano Saúde" width="220" height="73" style="display:block;margin:0 auto;" />
         </div>
         
         <!-- Card principal -->
-        <div style="background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:16px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <div style="background-color:#1A1A1A;border:1px solid #333;border-radius:16px;padding:32px;" data-ogsb="true">
           ${content}
         </div>
         
@@ -91,18 +98,18 @@ export async function enviarEmailConfirmacaoCadastro(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
         Olá, ${dados.nome.split(' ')[0]}!
       </h2>
-      <p style="color:#6B7280;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
         Recebemos sua solicitação de cadastro como corretor${dados.tipoPessoa === 'pj' ? ' (Pessoa Jurídica)' : ''} parceiro da Humano Saúde.
       </p>
       
-      <div style="background-color:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <h3 style="color:#92400E;font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">
+      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <h3 style="color:#D4AF37;font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">
           📋 Próximos passos
         </h3>
-        <ol style="color:#4B5563;font-size:14px;line-height:2;margin:0;padding-left:20px;">
+        <ol style="color:#A1A1AA;font-size:14px;line-height:2;margin:0;padding-left:20px;">
           <li>Nossa equipe analisará seu cadastro</li>
           <li>Você receberá um e-mail com a resposta em até <strong>48 horas úteis</strong></li>
           <li>Se aprovado, enviaremos seus dados de acesso e um link para completar seu onboarding</li>
@@ -167,52 +174,52 @@ export async function enviarEmailNotificacaoAdmin(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
         Nova solicitação de cadastro
       </h2>
       
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Nome</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;font-weight:600;">${dados.nome}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Nome</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.nome}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Tipo</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;">${tipoBadge}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Tipo</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;">${tipoBadge}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#D4AF37;font-size:14px;font-weight:500;">${dados.email}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4AF37;font-size:14px;font-weight:500;">${dados.email}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Telefone</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${dados.telefone}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Telefone</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.telefone}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Documento</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${documento}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Documento</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${documento}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Experiência</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${dados.experienciaAnos || 0} anos</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Experiência</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.experienciaAnos || 0} anos</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Motivações</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${motivacoesText}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Motivações</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${motivacoesText}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Modalidade</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${dados.modalidade || 'digital'}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Modalidade</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.modalidade || 'digital'}</td>
         </tr>
         <tr>
           <td style="padding:12px 0;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Como conheceu</td>
-          <td style="padding:12px 0;color:#111827;font-size:14px;">${dados.comoConheceu?.replace(/_/g, ' ') || '—'}</td>
+          <td style="padding:12px 0;color:#D4D4D4;font-size:14px;">${dados.comoConheceu?.replace(/_/g, ' ') || '—'}</td>
         </tr>
       </table>
       
       <div style="text-align:center;margin-top:28px;">
         <a href="${BASE_URL}/portal-interno-hks-2026/corretores" 
-           style="display:inline-block;background-color:#D4AF37;color:#000000;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
           Analisar Solicitação →
         </a>
       </div>
@@ -299,13 +306,13 @@ export async function enviarEmailAprovacao(dados: {
         </h3>
         <table style="width:100%;border-collapse:collapse;">
           <tr>
-            <td style="padding:6px 0;color:#6B7280;font-size:13px;width:100px;font-weight:600;">E-mail:</td>
-            <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${dados.email}</td>
+            <td style="padding:6px 0;color:#A1A1AA;font-size:13px;width:100px;font-weight:600;">E-mail:</td>
+            <td style="padding:6px 0;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.email}</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#6B7280;font-size:13px;font-weight:600;">Senha:</td>
+            <td style="padding:6px 0;color:#A1A1AA;font-size:13px;font-weight:600;">Senha:</td>
             <td style="padding:6px 0;font-size:14px;">
-              <code style="background-color:#E5E7EB;padding:4px 10px;border-radius:6px;font-family:monospace;font-size:15px;color:#111827;font-weight:700;letter-spacing:1px;">
+              <code style="background-color:#333;padding:4px 10px;border-radius:6px;font-family:monospace;font-size:15px;color:#F5F5F5;font-weight:700;letter-spacing:1px;">
                 ${dados.senhaTemporaria}
               </code>
             </td>
@@ -318,8 +325,8 @@ export async function enviarEmailAprovacao(dados: {
       
       <div style="text-align:center;margin-bottom:20px;">
         <a href="${loginUrl}" 
-           style="display:inline-block;background-color:#111827;color:#FFFFFF;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;margin-right:8px;">
-          Acessar Painel →
+           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF !important;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;margin-right:8px;" data-ogsb="true">
+          <span style="color:#FFFFFF !important;">Acessar Painel →</span>
         </a>
       </div>
     ` : '';
@@ -331,22 +338,22 @@ export async function enviarEmailAprovacao(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
         Parabéns, ${dados.nome.split(' ')[0]}!
       </h2>
-      <p style="color:#6B7280;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
         Seu cadastro como corretor parceiro da Humano Saúde foi <strong style="color:#16A34A;">aprovado</strong>!
       </p>
       
       ${dadosAcessoBlock}
       
-      <div style="background-color:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:20px;margin-bottom:20px;">
-        <p style="color:#4B5563;font-size:14px;line-height:1.6;margin:0 0 16px;">
+      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:20px;">
+        <p style="color:#A1A1AA;font-size:14px;line-height:1.6;margin:0 0 16px;">
           Para finalizar, complete seu onboarding enviando seus documentos e dados bancários:
         </p>
         <div style="text-align:center;">
           <a href="${dados.onboardingLink}" 
-             style="display:inline-block;background-color:#D4AF37;color:#000000;padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;">
+             style="display:inline-block;background-color:#D4AF37;color:#FFFFFF;padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;">
             Completar Onboarding →
           </a>
         </div>
@@ -394,27 +401,27 @@ export async function enviarEmailAlteracaoBancariaCorretor(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
         Solicitação recebida
       </h2>
-      <p style="color:#6B7280;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
         Olá, ${dados.nome.split(' ')[0]}! Sua solicitação de alteração de conta bancária foi recebida.
       </p>
       
-      <div style="background-color:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:20px;margin-bottom:24px;">
+      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:24px;">
         <table style="width:100%;border-collapse:collapse;">
           <tr>
-            <td style="padding:8px 0;color:#6B7280;font-size:13px;width:130px;font-weight:600;">Novo Banco:</td>
-            <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;">${dados.bancoNovo}</td>
+            <td style="padding:8px 0;color:#A1A1AA;font-size:13px;width:130px;font-weight:600;">Novo Banco:</td>
+            <td style="padding:8px 0;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.bancoNovo}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:#6B7280;font-size:13px;font-weight:600;">Motivo:</td>
-            <td style="padding:8px 0;color:#111827;font-size:14px;">${dados.motivo}</td>
+            <td style="padding:8px 0;color:#A1A1AA;font-size:13px;font-weight:600;">Motivo:</td>
+            <td style="padding:8px 0;color:#D4D4D4;font-size:14px;">${dados.motivo}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:#6B7280;font-size:13px;font-weight:600;">Status:</td>
+            <td style="padding:8px 0;color:#A1A1AA;font-size:13px;font-weight:600;">Status:</td>
             <td style="padding:8px 0;">
-              <span style="background-color:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;">EM ANÁLISE</span>
+              <span style="background-color:#FEF3C7;color:#D4AF37;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;">EM ANÁLISE</span>
             </td>
           </tr>
         </table>
@@ -459,36 +466,36 @@ export async function enviarEmailAlteracaoBancariaAdmin(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
         Solicitação de alteração bancária
       </h2>
       
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Corretor</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;font-weight:600;">${dados.corretorNome}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Corretor</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.corretorNome}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#D4AF37;font-size:14px;">${dados.corretorEmail}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4AF37;font-size:14px;">${dados.corretorEmail}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Banco Atual</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${dados.bancoAntigo}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Banco Atual</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.bancoAntigo}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Novo Banco</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;font-weight:600;">${dados.bancoNovo}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Novo Banco</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.bancoNovo}</td>
         </tr>
         <tr>
           <td style="padding:12px 0;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Motivo</td>
-          <td style="padding:12px 0;color:#111827;font-size:14px;">${dados.motivo}</td>
+          <td style="padding:12px 0;color:#D4D4D4;font-size:14px;">${dados.motivo}</td>
         </tr>
       </table>
       
       <div style="text-align:center;margin-top:28px;">
         <a href="${BASE_URL}/portal-interno-hks-2026/corretores" 
-           style="display:inline-block;background-color:#D4AF37;color:#000000;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
           Analisar Solicitação →
         </a>
       </div>
@@ -525,10 +532,10 @@ export async function enviarEmailAlteracaoBancariaAprovada(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
         Alteração bancária aprovada!
       </h2>
-      <p style="color:#6B7280;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
         Olá, ${dados.nome.split(' ')[0]}! Sua solicitação de alteração de conta bancária foi <strong style="color:#16A34A;">aprovada</strong>.
       </p>
       
@@ -536,7 +543,7 @@ export async function enviarEmailAlteracaoBancariaAprovada(dados: {
         <h3 style="color:#166534;font-size:14px;margin:0 0 10px;font-weight:700;">
           🏦 Nova conta ativa
         </h3>
-        <p style="color:#4B5563;font-size:14px;margin:0;">
+        <p style="color:#A1A1AA;font-size:14px;margin:0;">
           <strong>${dados.bancoNovo}</strong> — Seus próximos pagamentos serão creditados nesta conta.
         </p>
       </div>
@@ -577,10 +584,10 @@ export async function enviarEmailAlteracaoBancariaRejeitada(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
         Alteração bancária não aprovada
       </h2>
-      <p style="color:#6B7280;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
         Olá, ${dados.nome.split(' ')[0]}. Infelizmente sua solicitação de alteração de conta bancária não foi aprovada.
       </p>
       
@@ -588,7 +595,7 @@ export async function enviarEmailAlteracaoBancariaRejeitada(dados: {
         <h3 style="color:#991B1B;font-size:14px;margin:0 0 10px;font-weight:700;">
           Motivo
         </h3>
-        <p style="color:#4B5563;font-size:14px;margin:0;">
+        <p style="color:#A1A1AA;font-size:14px;margin:0;">
           ${dados.motivo}
         </p>
       </div>
@@ -630,18 +637,18 @@ export async function enviarEmailAguardeVerificacao(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
         Documentos recebidos com sucesso!
       </h2>
-      <p style="color:#6B7280;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
         Olá, ${dados.nome.split(' ')[0]}! Seu onboarding foi concluído e seus documentos e dados bancários foram enviados.
       </p>
       
-      <div style="background-color:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <h3 style="color:#92400E;font-size:14px;margin:0 0 10px;font-weight:700;">
+      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <h3 style="color:#D4AF37;font-size:14px;margin:0 0 10px;font-weight:700;">
           Agora é com a gente!
         </h3>
-        <p style="color:#4B5563;font-size:14px;line-height:1.6;margin:0;">
+        <p style="color:#A1A1AA;font-size:14px;line-height:1.6;margin:0;">
           Nossa equipe irá verificar suas informações. Esse processo leva até <strong>48 horas úteis</strong>.<br>
           Assim que a verificação for concluída, você receberá um e-mail com seus dados de acesso ao painel do corretor.
         </p>
@@ -686,33 +693,33 @@ export async function enviarEmailOnboardingConcluidoAdmin(dados: {
         </div>
       </div>
       
-      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
+      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
         Onboarding concluído
       </h2>
       
-      <p style="color:#6B7280;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
         O corretor <strong>${dados.corretorNome}</strong> completou o onboarding e enviou todos os documentos e dados bancários.
       </p>
       
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Corretor</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;font-weight:600;">${dados.corretorNome}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Corretor</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.corretorNome}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#D4AF37;font-size:14px;">${dados.corretorEmail}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4AF37;font-size:14px;">${dados.corretorEmail}</td>
         </tr>
         ${dados.corretorTelefone ? `
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Telefone</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${dados.corretorTelefone}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Telefone</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.corretorTelefone}</td>
         </tr>
         ` : ''}
         ${dados.corretorCpf ? `
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">CPF</td>
-          <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;color:#111827;font-size:14px;">${dados.corretorCpf}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">CPF</td>
+          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.corretorCpf}</td>
         </tr>
         ` : ''}
         <tr>
@@ -725,7 +732,7 @@ export async function enviarEmailOnboardingConcluidoAdmin(dados: {
       
       <div style="text-align:center;margin-top:28px;">
         <a href="${BASE_URL}/portal-interno-hks-2026/corretores" 
-           style="display:inline-block;background-color:#D4AF37;color:#000000;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
           Verificar Documentos →
         </a>
       </div>
@@ -754,50 +761,44 @@ export async function enviarEmailConviteCorretor(dados: {
 }) {
   try {
     const content = `
-      <div style="text-align:center;margin-bottom:24px;">
-        <div style="display:inline-block;background-color:#D4AF37;color:#000;width:56px;height:56px;border-radius:14px;line-height:56px;font-size:24px;">
-          HS
-        </div>
-      </div>
-      
-      <h2 style="color:#111;font-size:26px;font-weight:800;margin:0 0 8px;text-align:center;">
+      <h2 style="color:#F5F5F5;font-size:26px;font-weight:800;margin:0 0 8px;text-align:center;">
         Você foi convidado!
       </h2>
       
-      <p style="color:#6B7280;font-size:16px;line-height:1.7;text-align:center;margin:0 0 24px;">
-        <strong style="color:#111;">${dados.nomeConvidante}</strong> acredita no seu potencial e te convidou para fazer parte 
+      <p style="color:#A1A1AA;font-size:16px;line-height:1.7;text-align:center;margin:0 0 24px;">
+        <strong style="color:#F5F5F5;">${dados.nomeConvidante}</strong> acredita no seu potencial e te convidou para fazer parte 
         da <strong style="color:#D4AF37;">rede de corretores da Humano Saúde</strong>.
       </p>
       
-      <div style="background-color:#F9FAFB;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <p style="color:#374151;font-size:16px;font-weight:700;margin:0 0 12px;">Por que ser um corretor Humano Saúde?</p>
+      <div style="background-color:#252525;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <p style="color:#E5E5E5;font-size:16px;font-weight:700;margin:0 0 12px;">Por que ser um corretor Humano Saúde?</p>
         <table cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr>
-            <td style="padding:6px 0;color:#6B7280;font-size:15px;">✅ Comissões competitivas acima do mercado</td>
+            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Comissões competitivas acima do mercado</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#6B7280;font-size:15px;">✅ Plataforma completa com CRM e Pipeline</td>
+            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Plataforma completa com CRM e Pipeline</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#6B7280;font-size:15px;">✅ Leads qualificados direto no seu painel</td>
+            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Leads qualificados direto no seu painel</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#6B7280;font-size:15px;">✅ Suporte pós-venda dedicado</td>
+            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Suporte pós-venda dedicado</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#6B7280;font-size:15px;">✅ Treinamento contínuo e materiais exclusivos</td>
+            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Treinamento contínuo e materiais exclusivos</td>
           </tr>
         </table>
       </div>
       
       <div style="text-align:center;margin-bottom:16px;">
         <a href="${BASE_URL}/seja-corretor" 
-           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;">
-          Conheça o Programa →
+           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF !important;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;" data-ogsb="true">
+          <span style="color:#FFFFFF !important;">Conheça o Programa →</span>
         </a>
       </div>
       
-      <p style="color:#9CA3AF;font-size:14px;text-align:center;margin:0;">
+      <p style="color:#71717A;font-size:14px;text-align:center;margin:0;">
         Acesse e cadastre-se. É rápido, gratuito e sem burocracia.
       </p>
     `;

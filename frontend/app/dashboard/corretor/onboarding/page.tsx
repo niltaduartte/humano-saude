@@ -70,6 +70,7 @@ function FileUploadCard({
   docFile,
   onFileSelect,
   onRemove,
+  validating = false,
 }: {
   label: string;
   description: string;
@@ -78,6 +79,7 @@ function FileUploadCard({
   docFile: DocFile;
   onFileSelect: (file: File) => void;
   onRemove: () => void;
+  validating?: boolean;
 }) {
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -101,7 +103,7 @@ function FileUploadCard({
             : 'border-white/10 bg-white/[0.02] hover:border-white/20',
       )}
     >
-      {docFile.status === 'empty' ? (
+      {docFile.status === 'empty' && !validating ? (
         <label className="flex flex-col items-center gap-2 sm:gap-3 cursor-pointer">
           <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-xl bg-white/5 flex items-center justify-center">
             <Icon className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-white/30" />
@@ -125,12 +127,24 @@ function FileUploadCard({
             }}
           />
         </label>
+      ) : validating || docFile.status === 'uploading' ? (
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center shrink-0">
+            <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#D4AF37] animate-spin" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm sm:text-base text-white font-medium truncate">
+              {validating ? 'Verificando documento...' : 'Enviando...'}
+            </p>
+            <p className="text-xs sm:text-sm text-[#D4AF37]/60">
+              {validating ? 'Validando se o documento corresponde ao tipo selecionado' : 'Aguarde...'}
+            </p>
+          </div>
+        </div>
       ) : (
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center shrink-0">
-            {docFile.status === 'uploading' ? (
-              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#D4AF37] animate-spin" />
-            ) : docFile.status === 'error' ? (
+            {docFile.status === 'error' ? (
               <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
             ) : (
               <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
@@ -141,9 +155,7 @@ function FileUploadCard({
               {docFile.file?.name ?? label}
             </p>
             <p className="text-xs sm:text-sm text-white/40">
-              {docFile.status === 'uploading'
-                ? 'Enviando...'
-                : docFile.status === 'error'
+              {docFile.status === 'error'
                   ? docFile.errorMsg ?? 'Erro no upload'
                   : `${((docFile.file?.size ?? 0) / 1024).toFixed(0)} KB`}
             </p>
@@ -197,18 +209,25 @@ function SelfieCaptureCard({
     setCameraError('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
       setCameraActive(true);
     } catch {
       setCameraError('Não foi possível acessar a câmera. Verifique as permissões do navegador.');
     }
   };
+
+  // Quando a câmera fica ativa, conectar o stream ao video element
+  useEffect(() => {
+    if (cameraActive && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {
+        setCameraError('Erro ao iniciar o vídeo da câmera.');
+      });
+    }
+  }, [cameraActive]);
 
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -275,12 +294,12 @@ function SelfieCaptureCard({
   // Câmera ativa — exibir preview de vídeo
   if (cameraActive) {
     return (
-      <div className="relative rounded-xl border-2 border-dashed border-[#D4AF37]/30 bg-black/40 p-4 sm:p-5 md:p-6 transition-all">
+      <div className="relative rounded-xl border-2 border-dashed border-[#D4AF37]/30 bg-black/40 p-3 sm:p-4 md:p-6 transition-all">
         <div className="flex flex-col items-center gap-3">
           <p className="text-sm sm:text-base text-white font-medium">
             Selfie com documento <span className="text-white/40 font-normal text-xs">(opcional)</span>
           </p>
-          <div className="relative w-full max-w-[320px] aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-black">
+          <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-xl overflow-hidden border border-white/10 bg-black">
             <video
               ref={videoRef}
               autoPlay
@@ -411,9 +430,43 @@ function OnboardingContent() {
   const [chavePix, setChavePix] = useState('');
 
   // ─── Handlers ────────────────────────────────────────────
+  const [validandoDoc, setValidandoDoc] = useState<string | null>(null);
+
+  // Converter File para base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Validar documento via IA
+  const validarDocumentoIA = async (file: File, tipoEsperado: string): Promise<{ valid: boolean; message: string }> => {
+    try {
+      // Só validar imagens (não PDFs)
+      if (!file.type.startsWith('image/')) {
+        return { valid: true, message: 'PDF aceito — verificação manual' };
+      }
+      const base64 = await fileToBase64(file);
+      const res = await fetch('/api/auth/corretor/validar-documento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, tipoEsperado }),
+      });
+      const data = await res.json();
+      return { valid: data.valid, message: data.message };
+    } catch {
+      // Em caso de erro de rede, aceitar
+      return { valid: true, message: 'Validação indisponível' };
+    }
+  };
+
   const handleFileSelect = (
     setter: React.Dispatch<React.SetStateAction<DocFile>>,
-  ) => (file: File) => {
+    tipoDocValidacao?: 'cnh' | 'rg_frente' | 'rg_verso',
+  ) => async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
       setter({ file: null, preview: '', status: 'error', errorMsg: 'Arquivo muito grande (máx. 10MB)' });
       return;
@@ -423,7 +476,23 @@ function OnboardingContent() {
       setter({ file: null, preview: '', status: 'error', errorMsg: 'Formato não aceito' });
       return;
     }
+
     const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+
+    // Se tem tipo de documento para validar, fazer validação via IA
+    if (tipoDocValidacao && file.type.startsWith('image/')) {
+      setter({ file, preview, status: 'uploading', errorMsg: undefined });
+      setValidandoDoc(tipoDocValidacao);
+      
+      const result = await validarDocumentoIA(file, tipoDocValidacao);
+      setValidandoDoc(null);
+      
+      if (!result.valid) {
+        setter({ file: null, preview: '', status: 'error', errorMsg: result.message || 'Este documento não corresponde ao tipo selecionado. Envie o documento correto.' });
+        return;
+      }
+    }
+
     setter({ file, preview, status: 'selected' });
   };
 
@@ -739,8 +808,9 @@ function OnboardingContent() {
                       icon={FileText}
                       required
                       docFile={docCnh}
-                      onFileSelect={handleFileSelect(setDocCnh)}
+                      onFileSelect={handleFileSelect(setDocCnh, 'cnh')}
                       onRemove={resetFile(setDocCnh)}
+                      validating={validandoDoc === 'cnh'}
                     />
                   ) : (
                     <div className="space-y-3">
@@ -750,8 +820,9 @@ function OnboardingContent() {
                         icon={FileText}
                         required
                         docFile={docRgFrente}
-                        onFileSelect={handleFileSelect(setDocRgFrente)}
+                        onFileSelect={handleFileSelect(setDocRgFrente, 'rg_frente')}
                         onRemove={resetFile(setDocRgFrente)}
+                        validating={validandoDoc === 'rg_frente'}
                       />
                       <FileUploadCard
                         label="RG — Verso"
@@ -759,8 +830,9 @@ function OnboardingContent() {
                         icon={FileText}
                         required
                         docFile={docRgVerso}
-                        onFileSelect={handleFileSelect(setDocRgVerso)}
+                        onFileSelect={handleFileSelect(setDocRgVerso, 'rg_verso')}
                         onRemove={resetFile(setDocRgVerso)}
+                        validating={validandoDoc === 'rg_verso'}
                       />
                     </div>
                   )}
