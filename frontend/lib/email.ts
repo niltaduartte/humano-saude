@@ -1,6 +1,13 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization para evitar erro durante build (env vars não disponíveis em build time)
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY!);
+  }
+  return _resend;
+}
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Humano Saúde <noreply@humanosaude.com.br>';
 const ADMIN_EMAILS = ['comercial@humanosaude.com.br'];
@@ -108,7 +115,7 @@ export async function enviarEmailConfirmacaoCadastro(dados: {
       </p>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: dados.email,
       subject: 'Cadastro recebido — Humano Saúde',
@@ -229,13 +236,13 @@ export async function enviarEmailNotificacaoAdmin(dados: {
     // Tentar com CC
     try {
       emailOptions.cc = CC_EMAILS;
-      const { data, error } = await resend.emails.send(emailOptions);
+      const { data, error } = await getResend().emails.send(emailOptions);
 
       if (error) {
         // Se falhar com CC, tentar sem CC e enviar separado
         console.warn('[email] CC falhou, enviando sem CC:', error.message);
         delete emailOptions.cc;
-        const { data: data2, error: error2 } = await resend.emails.send(emailOptions);
+        const { data: data2, error: error2 } = await getResend().emails.send(emailOptions);
         
         if (error2) {
           console.error('[email] Erro ao notificar admin:', error2);
@@ -244,7 +251,7 @@ export async function enviarEmailNotificacaoAdmin(dados: {
 
         // Enviar cópia separada para CC
         try {
-          await resend.emails.send({
+          await getResend().emails.send({
             from: FROM_EMAIL,
             to: CC_EMAILS,
             subject: `[CC] Novo Corretor — ${dados.nome} (${dados.tipoPessoa.toUpperCase()})`,
@@ -350,7 +357,7 @@ export async function enviarEmailAprovacao(dados: {
       </p>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: dados.email,
       subject: 'Cadastro aprovado — Humano Saúde',
@@ -419,7 +426,7 @@ export async function enviarEmailAlteracaoBancariaCorretor(dados: {
       </p>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: dados.email,
       subject: 'Solicitação de alteração bancária recebida — Humano Saúde',
@@ -487,7 +494,7 @@ export async function enviarEmailAlteracaoBancariaAdmin(dados: {
       </div>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAILS,
       subject: `Alteração Bancária — ${dados.corretorNome}`,
@@ -539,7 +546,7 @@ export async function enviarEmailAlteracaoBancariaAprovada(dados: {
       </p>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: dados.email,
       subject: 'Alteração bancária aprovada — Humano Saúde',
@@ -593,7 +600,7 @@ export async function enviarEmailAlteracaoBancariaRejeitada(dados: {
       </p>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: dados.email,
       subject: 'Alteração bancária não aprovada — Humano Saúde',
@@ -646,7 +653,7 @@ export async function enviarEmailAguardeVerificacao(dados: {
       </p>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: dados.email,
       subject: 'Onboarding concluído — Aguarde a verificação — Humano Saúde',
@@ -724,7 +731,7 @@ export async function enviarEmailOnboardingConcluidoAdmin(dados: {
       </div>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAILS,
       subject: `Onboarding concluído — ${dados.corretorNome}`,
@@ -795,7 +802,7 @@ export async function enviarEmailConviteCorretor(dados: {
       </p>
     `;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: [dados.emailConvidado],
       subject: `${dados.nomeConvidante} te convidou para ser Corretor Humano Saude`,
