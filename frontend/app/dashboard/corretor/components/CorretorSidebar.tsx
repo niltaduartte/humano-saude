@@ -27,6 +27,7 @@ import {
   Loader2,
   CheckCircle,
   Send,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import NextImage from 'next/image';
@@ -114,6 +115,12 @@ const menuItems: SidebarItem[] = [
     icon: CalendarClock,
     href: `${B}/renovacoes`,
     badge: { text: '3', variant: 'warning' },
+  },
+  {
+    id: 'cadastro',
+    label: 'Cadastro',
+    icon: ClipboardList,
+    href: `${B}/meu-cadastro`,
   },
   {
     id: 'perfil',
@@ -424,7 +431,7 @@ export default function CorretorSidebar() {
       {/* MOBILE TOGGLE */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed bottom-4 right-4 h-14 w-14 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#F6E05E] flex items-center justify-center shadow-lg shadow-[#D4AF37]/30 z-50"
+        className="lg:hidden fixed bottom-4 left-4 h-14 w-14 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#F6E05E] flex items-center justify-center shadow-lg shadow-[#D4AF37]/30 z-50"
       >
         {isMobileOpen ? <X className="h-6 w-6 text-black" /> : <Kanban className="h-6 w-6 text-black" />}
       </button>

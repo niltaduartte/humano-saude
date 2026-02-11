@@ -1467,11 +1467,11 @@ export default function SolicitacoesCorretorPage() {
                           <div key={doc.id} className="flex items-center gap-3 bg-white/[0.03] rounded-xl p-3 border border-white/[0.05] hover:border-white/10 transition-all">
                             <div className={cn(
                               'h-9 w-9 rounded-lg flex items-center justify-center shrink-0',
-                              doc.status === 'aprovado' ? 'bg-green-500/10' : doc.status === 'rejeitado' ? 'bg-red-500/10' : 'bg-[#D4AF37]/10',
+                              doc.status === 'aprovado' ? 'bg-green-500/10' : doc.status === 'rejeitado' ? 'bg-red-500/10' : doc.url ? 'bg-green-500/10' : 'bg-[#D4AF37]/10',
                             )}>
                               <DocIcon className={cn(
                                 'h-4 w-4',
-                                doc.status === 'aprovado' ? 'text-green-400' : doc.status === 'rejeitado' ? 'text-red-400' : 'text-[#D4AF37]',
+                                doc.status === 'aprovado' ? 'text-green-400' : doc.status === 'rejeitado' ? 'text-red-400' : doc.url ? 'text-green-400' : 'text-[#D4AF37]',
                               )} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1489,9 +1489,10 @@ export default function SolicitacoesCorretorPage() {
                                   'text-[11px] font-bold px-1.5 py-0.5 rounded',
                                   doc.status === 'aprovado' ? 'bg-green-500/10 text-green-400'
                                     : doc.status === 'rejeitado' ? 'bg-red-500/10 text-red-400'
+                                    : doc.url ? 'bg-green-500/10 text-green-400'
                                     : 'bg-yellow-500/10 text-yellow-400',
                                 )}>
-                                  {doc.status === 'aprovado' ? '✓ APROVADO' : doc.status === 'rejeitado' ? '✕ REJEITADO' : '⏳ PENDENTE'}
+                                  {doc.status === 'aprovado' ? '✓ APROVADO' : doc.status === 'rejeitado' ? '✕ REJEITADO' : doc.url ? '✓ ENVIADO' : '⏳ PENDENTE'}
                                 </span>
                               </div>
                             </div>

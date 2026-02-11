@@ -21,11 +21,11 @@ const LOGO_120 = 'https://humanosaude.com.br/images/logos/logo%20humano%20saude%
 // ─── Layout base dos emails ────────────────────────────────
 function emailLayout(content: string, showSpamWarning = false): string {
   const spamBlock = showSpamWarning ? `
-    <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:16px;margin-top:20px;">
+    <div style="background-color:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:16px;margin-top:20px;" class="dm-card">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="24" valign="top" style="padding-right:10px;">⚠️</td>
-          <td style="color:#D4AF37;font-size:13px;line-height:1.5;">
+          <td style="color:#92400E;font-size:13px;line-height:1.5;" class="dm-muted">
             <strong>Importante:</strong> Nossos e-mails podem cair na pasta <strong>Spam/Lixo Eletrônico</strong>. 
             Fique de olho e marque como "Não é spam" para receber os próximos comunicados normalmente.
           </td>
@@ -40,24 +40,35 @@ function emailLayout(content: string, showSpamWarning = false): string {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="color-scheme" content="dark">
-      <meta name="supported-color-schemes" content="dark">
+      <meta name="color-scheme" content="light dark">
+      <meta name="supported-color-schemes" content="light dark">
       <style>
-        :root { color-scheme: dark; supported-color-schemes: dark; }
-        [data-ogsb] { background-color: inherit !important; }
-        a[x-apple-data-detectors] { color: inherit !important; }
+        :root { color-scheme: light dark; }
+        @media (prefers-color-scheme: dark) {
+          .email-body { background-color: #0A0A0A !important; }
+          .email-header { background-color: #050505 !important; }
+          .email-card { background-color: #1A1A1A !important; border-color: #333 !important; }
+          .dm-card { background-color: #252525 !important; border-color: #3A3A3A !important; }
+          .dm-heading { color: #F5F5F5 !important; }
+          .dm-text { color: #D4D4D4 !important; }
+          .dm-muted { color: #A1A1AA !important; }
+          .dm-label { color: #D4AF37 !important; }
+          .dm-border { border-color: #333 !important; }
+          .dm-box { background-color: #252525 !important; border-color: #3A3A3A !important; }
+          .dm-code { background-color: #333 !important; color: #F5F5F5 !important; }
+        }
       </style>
     </head>
-    <body style="margin:0;padding:0;background-color:#0A0A0A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;" data-ogsb="true">
+    <body style="margin:0;padding:0;background-color:#FFFFFF;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;" class="email-body">
       <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
         
         <!-- Header com logo -->
-        <div style="text-align:center;margin-bottom:28px;background-color:#050505;border-radius:16px;padding:24px 16px;" data-ogsb="true">
+        <div style="text-align:center;margin-bottom:28px;background-color:#050505;border-radius:16px;padding:24px 16px;" class="email-header">
           <img src="${LOGO_PRINCIPAL}" alt="Humano Saúde" width="220" height="73" style="display:block;margin:0 auto;" />
         </div>
         
         <!-- Card principal -->
-        <div style="background-color:#1A1A1A;border:1px solid #333;border-radius:16px;padding:32px;" data-ogsb="true">
+        <div style="background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:16px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.08);" class="email-card">
           ${content}
         </div>
         
@@ -68,7 +79,7 @@ function emailLayout(content: string, showSpamWarning = false): string {
           <p style="color:#9CA3AF;font-size:11px;margin:0;">
             © ${new Date().getFullYear()} Humano Saúde — Todos os direitos reservados
           </p>
-          <p style="color:#D1D5DB;font-size:10px;margin:4px 0 0;">
+          <p style="color:#6B7280;font-size:10px;margin:4px 0 0;" class="dm-muted">
             Este é um e-mail automático. Em caso de dúvidas, responda diretamente ou escreva para
             <a href="mailto:comercial@humanosaude.com.br" style="color:#D4AF37;text-decoration:none;">comercial@humanosaude.com.br</a>
           </p>
@@ -98,25 +109,25 @@ export async function enviarEmailConfirmacaoCadastro(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
         Olá, ${dados.nome.split(' ')[0]}!
       </h2>
-      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
         Recebemos sua solicitação de cadastro como corretor${dados.tipoPessoa === 'pj' ? ' (Pessoa Jurídica)' : ''} parceiro da Humano Saúde.
       </p>
       
-      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <h3 style="color:#D4AF37;font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">
+      <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
+        <h3 style="color:#D4AF37;font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;" class="dm-label">
           📋 Próximos passos
         </h3>
-        <ol style="color:#A1A1AA;font-size:14px;line-height:2;margin:0;padding-left:20px;">
+        <ol style="color:#4B5563;font-size:14px;line-height:2;margin:0;padding-left:20px;" class="dm-text">
           <li>Nossa equipe analisará seu cadastro</li>
           <li>Você receberá um e-mail com a resposta em até <strong>48 horas úteis</strong></li>
           <li>Se aprovado, enviaremos seus dados de acesso e um link para completar seu onboarding</li>
         </ol>
       </div>
       
-      <p style="color:#9CA3AF;font-size:13px;text-align:center;margin:0;">
+      <p style="color:#9CA3AF;font-size:13px;text-align:center;margin:0;" class="dm-muted">
         Caso tenha dúvidas, entre em contato pelo e-mail<br>
         <a href="mailto:comercial@humanosaude.com.br" style="color:#D4AF37;text-decoration:none;font-weight:600;">comercial@humanosaude.com.br</a>
       </p>
@@ -174,46 +185,46 @@ export async function enviarEmailNotificacaoAdmin(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;" class="dm-heading">
         Nova solicitação de cadastro
       </h2>
       
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Nome</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.nome}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;" class="dm-muted dm-border">Nome</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#111827;font-size:14px;font-weight:600;" class="dm-heading dm-border">${dados.nome}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Tipo</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;">${tipoBadge}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Tipo</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;" class="dm-border">${tipoBadge}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4AF37;font-size:14px;font-weight:500;">${dados.email}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">E-mail</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#D4AF37;font-size:14px;font-weight:500;" class="dm-border">${dados.email}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Telefone</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.telefone}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Telefone</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${dados.telefone}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Documento</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${documento}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Documento</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${documento}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Experiência</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.experienciaAnos || 0} anos</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Experiência</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${dados.experienciaAnos || 0} anos</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Motivações</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${motivacoesText}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Motivações</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${motivacoesText}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Modalidade</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.modalidade || 'digital'}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Modalidade</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${dados.modalidade || 'digital'}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Como conheceu</td>
-          <td style="padding:12px 0;color:#D4D4D4;font-size:14px;">${dados.comoConheceu?.replace(/_/g, ' ') || '—'}</td>
+          <td style="padding:12px 0;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted">Como conheceu</td>
+          <td style="padding:12px 0;color:#374151;font-size:14px;" class="dm-text">${dados.comoConheceu?.replace(/_/g, ' ') || '—'}</td>
         </tr>
       </table>
       
@@ -300,32 +311,32 @@ export async function enviarEmailAprovacao(dados: {
     const loginUrl = `${BASE_URL}/dashboard/corretor/login`;
     
     const dadosAcessoBlock = dados.senhaTemporaria ? `
-      <div style="background-color:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:20px;margin:20px 0;">
+      <div style="background-color:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:20px;margin:20px 0;" class="dm-box">
         <h3 style="color:#166534;font-size:14px;margin:0 0 12px;font-weight:700;">
           🔐 Seus dados de acesso
         </h3>
         <table style="width:100%;border-collapse:collapse;">
           <tr>
-            <td style="padding:6px 0;color:#A1A1AA;font-size:13px;width:100px;font-weight:600;">E-mail:</td>
-            <td style="padding:6px 0;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.email}</td>
+            <td style="padding:6px 0;color:#6B7280;font-size:13px;width:100px;font-weight:600;" class="dm-muted">E-mail:</td>
+            <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;" class="dm-heading">${dados.email}</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#A1A1AA;font-size:13px;font-weight:600;">Senha:</td>
+            <td style="padding:6px 0;color:#6B7280;font-size:13px;font-weight:600;" class="dm-muted">Senha:</td>
             <td style="padding:6px 0;font-size:14px;">
-              <code style="background-color:#333;padding:4px 10px;border-radius:6px;font-family:monospace;font-size:15px;color:#F5F5F5;font-weight:700;letter-spacing:1px;">
+              <code style="background-color:#E5E7EB;padding:4px 10px;border-radius:6px;font-family:monospace;font-size:15px;color:#111827;font-weight:700;letter-spacing:1px;" class="dm-code">
                 ${dados.senhaTemporaria}
               </code>
             </td>
           </tr>
         </table>
-        <p style="color:#6B7280;font-size:12px;margin:10px 0 0;font-style:italic;">
+        <p style="color:#6B7280;font-size:12px;margin:10px 0 0;font-style:italic;" class="dm-muted">
           ⚠️ Recomendamos alterar sua senha após o primeiro acesso.
         </p>
       </div>
       
       <div style="text-align:center;margin-bottom:20px;">
         <a href="${loginUrl}" 
-           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF !important;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;margin-right:8px;" data-ogsb="true">
+           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF !important;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;margin-right:8px;">
           <span style="color:#FFFFFF !important;">Acessar Painel →</span>
         </a>
       </div>
@@ -338,17 +349,17 @@ export async function enviarEmailAprovacao(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
         Parabéns, ${dados.nome.split(' ')[0]}!
       </h2>
-      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
         Seu cadastro como corretor parceiro da Humano Saúde foi <strong style="color:#16A34A;">aprovado</strong>!
       </p>
       
       ${dadosAcessoBlock}
       
-      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:20px;">
-        <p style="color:#A1A1AA;font-size:14px;line-height:1.6;margin:0 0 16px;">
+      <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:20px;" class="dm-box">
+        <p style="color:#4B5563;font-size:14px;line-height:1.6;margin:0 0 16px;" class="dm-text">
           Para finalizar, complete seu onboarding enviando seus documentos e dados bancários:
         </p>
         <div style="text-align:center;">
@@ -401,25 +412,25 @@ export async function enviarEmailAlteracaoBancariaCorretor(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
         Solicitação recebida
       </h2>
-      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
         Olá, ${dados.nome.split(' ')[0]}! Sua solicitação de alteração de conta bancária foi recebida.
       </p>
       
-      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:24px;">
+      <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
         <table style="width:100%;border-collapse:collapse;">
           <tr>
-            <td style="padding:8px 0;color:#A1A1AA;font-size:13px;width:130px;font-weight:600;">Novo Banco:</td>
-            <td style="padding:8px 0;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.bancoNovo}</td>
+            <td style="padding:8px 0;color:#6B7280;font-size:13px;width:130px;font-weight:600;" class="dm-muted">Novo Banco:</td>
+            <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;" class="dm-heading">${dados.bancoNovo}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:#A1A1AA;font-size:13px;font-weight:600;">Motivo:</td>
-            <td style="padding:8px 0;color:#D4D4D4;font-size:14px;">${dados.motivo}</td>
+            <td style="padding:8px 0;color:#6B7280;font-size:13px;font-weight:600;" class="dm-muted">Motivo:</td>
+            <td style="padding:8px 0;color:#374151;font-size:14px;" class="dm-text">${dados.motivo}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:#A1A1AA;font-size:13px;font-weight:600;">Status:</td>
+            <td style="padding:8px 0;color:#6B7280;font-size:13px;font-weight:600;" class="dm-muted">Status:</td>
             <td style="padding:8px 0;">
               <span style="background-color:#FEF3C7;color:#D4AF37;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;">EM ANÁLISE</span>
             </td>
@@ -466,30 +477,30 @@ export async function enviarEmailAlteracaoBancariaAdmin(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;" class="dm-heading">
         Solicitação de alteração bancária
       </h2>
       
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Corretor</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.corretorNome}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;" class="dm-muted dm-border">Corretor</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#111827;font-size:14px;font-weight:600;" class="dm-heading dm-border">${dados.corretorNome}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4AF37;font-size:14px;">${dados.corretorEmail}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">E-mail</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#D4AF37;font-size:14px;" class="dm-border">${dados.corretorEmail}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Banco Atual</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.bancoAntigo}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Banco Atual</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${dados.bancoAntigo}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Novo Banco</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.bancoNovo}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Novo Banco</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#111827;font-size:14px;font-weight:600;" class="dm-heading dm-border">${dados.bancoNovo}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Motivo</td>
-          <td style="padding:12px 0;color:#D4D4D4;font-size:14px;">${dados.motivo}</td>
+          <td style="padding:12px 0;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted">Motivo</td>
+          <td style="padding:12px 0;color:#374151;font-size:14px;" class="dm-text">${dados.motivo}</td>
         </tr>
       </table>
       
@@ -532,23 +543,23 @@ export async function enviarEmailAlteracaoBancariaAprovada(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
         Alteração bancária aprovada!
       </h2>
-      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
         Olá, ${dados.nome.split(' ')[0]}! Sua solicitação de alteração de conta bancária foi <strong style="color:#16A34A;">aprovada</strong>.
       </p>
       
-      <div style="background-color:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:20px;margin-bottom:24px;">
+      <div style="background-color:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
         <h3 style="color:#166534;font-size:14px;margin:0 0 10px;font-weight:700;">
           🏦 Nova conta ativa
         </h3>
-        <p style="color:#A1A1AA;font-size:14px;margin:0;">
+        <p style="color:#4B5563;font-size:14px;margin:0;" class="dm-text">
           <strong>${dados.bancoNovo}</strong> — Seus próximos pagamentos serão creditados nesta conta.
         </p>
       </div>
       
-      <p style="color:#9CA3AF;font-size:12px;text-align:center;margin:0;">
+      <p style="color:#9CA3AF;font-size:12px;text-align:center;margin:0;" class="dm-muted">
         A conta anterior foi desativada e consta no seu histórico para fins de auditoria.
       </p>
     `;
@@ -584,23 +595,23 @@ export async function enviarEmailAlteracaoBancariaRejeitada(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
         Alteração bancária não aprovada
       </h2>
-      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
         Olá, ${dados.nome.split(' ')[0]}. Infelizmente sua solicitação de alteração de conta bancária não foi aprovada.
       </p>
       
-      <div style="background-color:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:20px;margin-bottom:24px;">
+      <div style="background-color:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
         <h3 style="color:#991B1B;font-size:14px;margin:0 0 10px;font-weight:700;">
           Motivo
         </h3>
-        <p style="color:#A1A1AA;font-size:14px;margin:0;">
+        <p style="color:#4B5563;font-size:14px;margin:0;" class="dm-text">
           ${dados.motivo}
         </p>
       </div>
       
-      <p style="color:#9CA3AF;font-size:12px;text-align:center;margin:0;">
+      <p style="color:#9CA3AF;font-size:12px;text-align:center;margin:0;" class="dm-muted">
         Sua conta bancária atual continua ativa. Caso queira, você pode enviar uma nova solicitação.<br>
         Em caso de dúvidas, entre em contato pelo e-mail
         <a href="mailto:comercial@humanosaude.com.br" style="color:#D4AF37;text-decoration:none;font-weight:600;">comercial@humanosaude.com.br</a>
@@ -637,24 +648,24 @@ export async function enviarEmailAguardeVerificacao(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
         Documentos recebidos com sucesso!
       </h2>
-      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
         Olá, ${dados.nome.split(' ')[0]}! Seu onboarding foi concluído e seus documentos e dados bancários foram enviados.
       </p>
       
-      <div style="background-color:#252525;border:1px solid #3A3A3A;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <h3 style="color:#D4AF37;font-size:14px;margin:0 0 10px;font-weight:700;">
+      <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
+        <h3 style="color:#D4AF37;font-size:14px;margin:0 0 10px;font-weight:700;" class="dm-label">
           Agora é com a gente!
         </h3>
-        <p style="color:#A1A1AA;font-size:14px;line-height:1.6;margin:0;">
+        <p style="color:#4B5563;font-size:14px;line-height:1.6;margin:0;" class="dm-text">
           Nossa equipe irá verificar suas informações. Esse processo leva até <strong>48 horas úteis</strong>.<br>
           Assim que a verificação for concluída, você receberá um e-mail com seus dados de acesso ao painel do corretor.
         </p>
       </div>
       
-      <p style="color:#9CA3AF;font-size:13px;text-align:center;margin:0;">
+      <p style="color:#9CA3AF;font-size:13px;text-align:center;margin:0;" class="dm-muted">
         Enquanto isso, fique tranquilo — entraremos em contato em breve!<br>
         Em caso de dúvidas: <a href="mailto:comercial@humanosaude.com.br" style="color:#D4AF37;text-decoration:none;font-weight:600;">comercial@humanosaude.com.br</a>
       </p>
@@ -693,37 +704,37 @@ export async function enviarEmailOnboardingConcluidoAdmin(dados: {
         </div>
       </div>
       
-      <h2 style="color:#F5F5F5;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;">
+      <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 24px;font-weight:700;" class="dm-heading">
         Onboarding concluído
       </h2>
       
-      <p style="color:#A1A1AA;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;">
+      <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
         O corretor <strong>${dados.corretorNome}</strong> completou o onboarding e enviou todos os documentos e dados bancários.
       </p>
       
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;">Corretor</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#E5E5E5;font-size:14px;font-weight:600;">${dados.corretorNome}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;width:130px;font-weight:600;" class="dm-muted dm-border">Corretor</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#111827;font-size:14px;font-weight:600;" class="dm-heading dm-border">${dados.corretorNome}</td>
         </tr>
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">E-mail</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4AF37;font-size:14px;">${dados.corretorEmail}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">E-mail</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#D4AF37;font-size:14px;" class="dm-border">${dados.corretorEmail}</td>
         </tr>
         ${dados.corretorTelefone ? `
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Telefone</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.corretorTelefone}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">Telefone</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${dados.corretorTelefone}</td>
         </tr>
         ` : ''}
         ${dados.corretorCpf ? `
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">CPF</td>
-          <td style="padding:12px 0;border-bottom:1px solid #333;color:#D4D4D4;font-size:14px;">${dados.corretorCpf}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted dm-border">CPF</td>
+          <td style="padding:12px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${dados.corretorCpf}</td>
         </tr>
         ` : ''}
         <tr>
-          <td style="padding:12px 0;color:#9CA3AF;font-size:12px;text-transform:uppercase;font-weight:600;">Status</td>
+          <td style="padding:12px 0;color:#6B7280;font-size:12px;text-transform:uppercase;font-weight:600;" class="dm-muted">Status</td>
           <td style="padding:12px 0;">
             <span style="background-color:#DCFCE7;color:#166534;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;">DOCUMENTOS ENVIADOS</span>
           </td>
@@ -761,44 +772,44 @@ export async function enviarEmailConviteCorretor(dados: {
 }) {
   try {
     const content = `
-      <h2 style="color:#F5F5F5;font-size:26px;font-weight:800;margin:0 0 8px;text-align:center;">
+      <h2 style="color:#111827;font-size:26px;font-weight:800;margin:0 0 8px;text-align:center;" class="dm-heading">
         Você foi convidado!
       </h2>
       
-      <p style="color:#A1A1AA;font-size:16px;line-height:1.7;text-align:center;margin:0 0 24px;">
-        <strong style="color:#F5F5F5;">${dados.nomeConvidante}</strong> acredita no seu potencial e te convidou para fazer parte 
+      <p style="color:#4B5563;font-size:16px;line-height:1.7;text-align:center;margin:0 0 24px;" class="dm-text">
+        <strong style="color:#111827;" class="dm-heading">${dados.nomeConvidante}</strong> acredita no seu potencial e te convidou para fazer parte 
         da <strong style="color:#D4AF37;">rede de corretores da Humano Saúde</strong>.
       </p>
       
-      <div style="background-color:#252525;border-radius:12px;padding:20px;margin-bottom:24px;">
-        <p style="color:#E5E5E5;font-size:16px;font-weight:700;margin:0 0 12px;">Por que ser um corretor Humano Saúde?</p>
+      <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
+        <p style="color:#111827;font-size:16px;font-weight:700;margin:0 0 12px;" class="dm-heading">Por que ser um corretor Humano Saúde?</p>
         <table cellpadding="0" cellspacing="0" border="0" width="100%">
           <tr>
-            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Comissões competitivas acima do mercado</td>
+            <td style="padding:6px 0;color:#4B5563;font-size:15px;" class="dm-text">✅ Comissões competitivas acima do mercado</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Plataforma completa com CRM e Pipeline</td>
+            <td style="padding:6px 0;color:#4B5563;font-size:15px;" class="dm-text">✅ Plataforma completa com CRM e Pipeline</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Leads qualificados direto no seu painel</td>
+            <td style="padding:6px 0;color:#4B5563;font-size:15px;" class="dm-text">✅ Leads qualificados direto no seu painel</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Suporte pós-venda dedicado</td>
+            <td style="padding:6px 0;color:#4B5563;font-size:15px;" class="dm-text">✅ Suporte pós-venda dedicado</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;color:#A1A1AA;font-size:15px;">✅ Treinamento contínuo e materiais exclusivos</td>
+            <td style="padding:6px 0;color:#4B5563;font-size:15px;" class="dm-text">✅ Treinamento contínuo e materiais exclusivos</td>
           </tr>
         </table>
       </div>
       
       <div style="text-align:center;margin-bottom:16px;">
         <a href="${BASE_URL}/seja-corretor" 
-           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF !important;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;" data-ogsb="true">
+           style="display:inline-block;background-color:#D4AF37;color:#FFFFFF !important;padding:16px 40px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;">
           <span style="color:#FFFFFF !important;">Conheça o Programa →</span>
         </a>
       </div>
       
-      <p style="color:#71717A;font-size:14px;text-align:center;margin:0;">
+      <p style="color:#9CA3AF;font-size:14px;text-align:center;margin:0;" class="dm-muted">
         Acesse e cadastre-se. É rápido, gratuito e sem burocracia.
       </p>
     `;
