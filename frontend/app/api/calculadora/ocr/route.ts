@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
+import { VertexAI } from '@google-cloud/vertexai';
 
 export const maxDuration = 60;
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY!;
+// ═══ AUTH: Service Account do projeto Adaga Braca (GCP com créditos) ═══
+function getVertexAI() {
+  const saJSON = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!saJSON) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON não configurada');
+  }
+
+  const credentials = JSON.parse(saJSON);
+  const projectId = credentials.project_id;
+
+  return new VertexAI({
+    project: projectId,
+    location: 'us-central1',
+    googleAuthOptions: {
+      credentials,
+    },
+  });
+}
 
 const SYSTEM_PROMPT = `Você é um especialista em faturas de planos de saúde brasileiros.
 Analise o documento e retorne APENAS um JSON válido com estes campos:
@@ -61,26 +77,42 @@ function parseResponse(content: string) {
   };
 }
 
-// ─── Aguardar processamento do arquivo ───
-async function waitForFileReady(fileManager: GoogleAIFileManager, fileName: string): Promise<void> {
-  let file = await fileManager.getFile(fileName);
-  let attempts = 0;
-  while (file.state === FileState.PROCESSING && attempts < 10) {
-    console.log(`[OCR] Arquivo em processamento... (${attempts + 1})`);
-    await new Promise((r) => setTimeout(r, 2000));
-    file = await fileManager.getFile(fileName);
-    attempts++;
+// ─── Retry com backoff exponencial ───
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelayMs: number = 2000,
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const isRetryable =
+        lastError.message.includes('429') ||
+        lastError.message.includes('RESOURCE_EXHAUSTED') ||
+        lastError.message.includes('Too Many Requests') ||
+        lastError.message.includes('quota') ||
+        lastError.message.includes('UNAVAILABLE') ||
+        lastError.message.includes('503');
+
+      if (!isRetryable || attempt === maxRetries) {
+        throw lastError;
+      }
+
+      const delay = initialDelayMs * Math.pow(2, attempt);
+      console.log(`[OCR] ⏳ Erro 429/503, tentando novamente em ${delay}ms (tentativa ${attempt + 1}/${maxRetries})...`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
   }
-  if (file.state === FileState.FAILED) {
-    throw new Error('O Google não conseguiu processar este arquivo.');
-  }
+
+  throw lastError;
 }
 
 // ─── MAIN POST ───
 export async function POST(request: NextRequest) {
-  const fileManager = new GoogleAIFileManager(GOOGLE_AI_API_KEY);
-  let uploadedFileName: string | null = null;
-
   try {
     const formData = await request.formData();
     const file = formData.get('fatura') as File | null;
@@ -121,51 +153,61 @@ export async function POST(request: NextRequest) {
       mimeType = 'image/jpeg';
     }
 
-    // ═══ UPLOAD PARA GOOGLE FILE API ═══
-    console.log(`[OCR] Fazendo upload para Google File API (${mimeType})...`);
+    // ═══ CONVERTER PARA BASE64 ═══
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const base64Data = Buffer.from(bytes).toString('base64');
+    console.log(`[OCR] Base64 gerado: ${(base64Data.length / 1024).toFixed(0)}KB`);
 
-    const uploadResult = await fileManager.uploadFile(buffer, {
-      mimeType,
-      displayName: file.name,
-    });
-
-    uploadedFileName = uploadResult.file.name;
-    console.log(`[OCR] ✅ Upload feito: ${uploadedFileName} (uri: ${uploadResult.file.uri})`);
-
-    // Aguardar processamento (PDFs podem demorar)
-    await waitForFileReady(fileManager, uploadedFileName);
-    console.log(`[OCR] ✅ Arquivo pronto para análise`);
-
-    // ═══ ENVIAR PARA GEMINI ═══
-    const genAI = new GoogleGenerativeAI(GOOGLE_AI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+    // ═══ VERTEX AI (Projeto Adaga Braca com créditos GCP) ═══
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: 2000,
       },
+      systemInstruction: {
+        role: 'system',
+        parts: [{ text: SYSTEM_PROMPT }],
+      },
     });
 
-    console.log(`[OCR] Enviando para Gemini 2.0 Flash...`);
-    const result = await model.generateContent([
-      {
-        fileData: {
-          mimeType: uploadResult.file.mimeType,
-          fileUri: uploadResult.file.uri,
-        },
-      },
-      {
-        text: SYSTEM_PROMPT,
-      },
-    ]);
+    console.log(`[OCR] Enviando para Vertex AI (gemini-1.5-flash) com retry...`);
 
-    const response = await result.response;
-    const text = response.text();
+    const text = await withRetry(async () => {
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  mimeType,
+                  data: base64Data,
+                },
+              },
+              {
+                text: 'Analise esta fatura de plano de saúde e extraia os dados solicitados.',
+              },
+            ],
+          },
+        ],
+      });
+
+      const response = result.response;
+      const candidates = response.candidates;
+      if (!candidates || candidates.length === 0) {
+        throw new Error('Nenhuma resposta do modelo');
+      }
+      const parts = candidates[0].content?.parts;
+      if (!parts || parts.length === 0) {
+        throw new Error('Resposta vazia do modelo');
+      }
+      return parts[0].text || '';
+    });
 
     // ═══ LOG DA RESPOSTA BRUTA ═══
-    console.log(`[OCR] ═══ RESPOSTA BRUTA DO GEMINI ═══`);
+    console.log(`[OCR] ═══ RESPOSTA BRUTA DO GEMINI (VERTEX AI) ═══`);
     console.log(text);
     console.log(`[OCR] ═══ FIM DA RESPOSTA BRUTA ═══`);
 
@@ -198,18 +240,13 @@ export async function POST(request: NextRequest) {
       userMsg = 'O arquivo não pôde ser processado. Tente outro ou preencha manualmente.';
     } else if (errorMsg.includes('too large') || errorMsg.includes('size')) {
       userMsg = 'Arquivo muito grande. Tire um print da fatura e envie como imagem.';
+    } else if (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
+      userMsg = 'Sistema temporariamente ocupado. Tente novamente em 30 segundos.';
+    } else if (errorMsg.includes('GOOGLE_SERVICE_ACCOUNT_JSON')) {
+      userMsg = 'Erro de configuração do servidor. Contate o suporte.';
+      console.error('[OCR] ⚠️ GOOGLE_SERVICE_ACCOUNT_JSON não está configurada na Vercel!');
     }
 
     return NextResponse.json({ success: false, error: userMsg });
-  } finally {
-    // ═══ LIMPAR: DELETAR ARQUIVO DO GOOGLE ═══
-    if (uploadedFileName) {
-      try {
-        await fileManager.deleteFile(uploadedFileName);
-        console.log(`[OCR] 🗑️ Arquivo deletado do Google: ${uploadedFileName}`);
-      } catch {
-        console.log(`[OCR] ⚠️ Não deletou arquivo (vai expirar em 48h): ${uploadedFileName}`);
-      }
-    }
   }
 }
