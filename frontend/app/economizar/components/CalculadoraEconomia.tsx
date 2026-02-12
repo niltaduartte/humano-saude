@@ -1213,6 +1213,17 @@ export default function CalculadoraEconomia({
                     </div>
                   </div>
 
+                  {/* ─── Aviso de Segurança (abaixo do upload) ─── */}
+                  <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                    <Lock className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-white/40 leading-relaxed">
+                      <span className="text-green-400 font-semibold">Ambiente Seguro:</span>{' '}
+                      Seus documentos são processados de forma privada e criptografada.
+                      Utilizamos tecnologia de ponta para garantir que apenas nossa equipe
+                      técnica tenha acesso aos seus dados para fins de análise de plano de saúde.
+                    </p>
+                  </div>
+
                   {cameraError && (
                     <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
                       <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
@@ -2259,16 +2270,45 @@ export default function CalculadoraEconomia({
             </div>
           </div>
 
-          {/* Linha separadora + copyright */}
-          <div className="border-t border-white/[0.06] pt-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <p className="text-[11px] text-white/20 text-center sm:text-left">
-                © {new Date().getFullYear()} Humano Saúde — Todos os direitos reservados. Valores estimados, sujeitos à análise.
+          {/* Linha separadora + LGPD + copyright */}
+          <div className="border-t border-white/[0.06] pt-6 space-y-4">
+            {/* Bloco LGPD completo */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="h-4 w-4 text-[#D4AF37]/60" />
+                <span className="text-xs font-semibold text-white/40">Privacidade e Proteção de Dados</span>
+              </div>
+              <p className="text-[10px] text-white/25 leading-relaxed">
+                Em conformidade com a <span className="text-white/35 font-medium">Lei Geral de Proteção de Dados (Lei 13.709/2018)</span>,
+                informamos que todos os dados coletados (faturas e documentos pessoais) são processados via infraestrutura
+                segura Google Cloud e armazenados de forma sigilosa. Seus dados nunca serão compartilhados com terceiros
+                sem sua autorização expressa. Para exercer seus direitos de titular de dados, entre em contato pelo e-mail{' '}
+                <a href="mailto:comercial@humanosaude.com.br" className="text-[#D4AF37]/50 hover:text-[#D4AF37] transition-colors underline">
+                  comercial@humanosaude.com.br
+                </a>.
               </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-center sm:text-left">
+                <p className="text-[11px] text-white/20">
+                  © {new Date().getFullYear()} Humano Saúde — Todos os direitos reservados.
+                </p>
+                <p className="text-[10px] text-white/15 mt-0.5">
+                  Valores estimados, sujeitos à análise. Registro SUSEP consultável em{' '}
+                  <a href="https://www.susep.gov.br" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/30 transition-colors">
+                    susep.gov.br
+                  </a>
+                </p>
+              </div>
               <div className="flex items-center gap-4 text-[11px] text-white/20">
                 <span className="flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  Dados protegidos pela LGPD
+                  <Lock className="h-3 w-3 text-green-500/40" />
+                  SSL Criptografado
+                </span>
+                <span className="flex items-center gap-1">
+                  <Shield className="h-3 w-3 text-blue-400/40" />
+                  LGPD
                 </span>
               </div>
             </div>
