@@ -180,7 +180,7 @@ const DOCUMENTOS_INICIAIS: DocumentoUpload[] = [
 export default function CalculadoraEconomia({
   corretor,
 }: {
-  corretor: CorretorPublico;
+  corretor?: CorretorPublico;
 }) {
   const [etapa, setEtapa] = useState<Etapa>('upload');
   const [uploading, setUploading] = useState(false);
@@ -724,7 +724,7 @@ export default function CalculadoraEconomia({
 
       const bestEconomia = simData.propostas?.[0]?.economia_valor || Math.round(valor * 0.3 * 100) / 100;
       const leadResult = await salvarLeadIndicacao({
-        corretor_id: corretor.id,
+        corretor_id: corretor?.id,
         nome: nomeResponsavel || nome || null as unknown as undefined,
         email: email || null as unknown as undefined,
         telefone: telefone || null as unknown as undefined,
@@ -736,6 +736,7 @@ export default function CalculadoraEconomia({
         valor_estimado_min: simData.propostas?.[0]?.valor_total || Math.round(valor * 0.65 * 100) / 100,
         valor_estimado_max: simData.propostas?.[simData.propostas.length - 1]?.valor_total || Math.round(valor * 0.78 * 100) / 100,
         economia_estimada: bestEconomia,
+        origem: corretor ? 'link_corretor' : 'trafego_pago',
         metadata: {
           user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
           referrer: typeof document !== 'undefined' ? document.referrer : '',

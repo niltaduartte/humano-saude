@@ -77,7 +77,8 @@ export async function getCorretorBySlug(slug: string): Promise<{
 // =============================================
 
 export async function salvarLeadIndicacao(dados: {
-  corretor_id: string;
+  corretor_id?: string;
+  origem?: string;
   nome?: string;
   email?: string;
   telefone?: string;
@@ -98,7 +99,7 @@ export async function salvarLeadIndicacao(dados: {
     const { data, error } = await supabase
       .from('leads_indicacao')
       .insert({
-        corretor_id: dados.corretor_id,
+        corretor_id: dados.corretor_id || null,
         nome: dados.nome || null,
         email: dados.email || null,
         telefone: dados.telefone || null,
@@ -112,7 +113,7 @@ export async function salvarLeadIndicacao(dados: {
         valor_estimado_max: dados.valor_estimado_max || null,
         economia_estimada: dados.economia_estimada || null,
         status: 'simulou',
-        origem: 'link_corretor',
+        origem: dados.origem || 'link_corretor',
         metadata: dados.metadata || {},
       })
       .select('id')
