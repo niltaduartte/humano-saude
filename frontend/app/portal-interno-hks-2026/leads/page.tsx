@@ -17,6 +17,7 @@ import {
 } from '../components';
 import type { Column } from '../components';
 import { LeadDialog } from '../components/LeadDialog';
+import { LeadDetailDrawer } from '../components/LeadDetailDrawer';
 import { toast } from 'sonner';
 
 // ============================================
@@ -139,6 +140,8 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   async function loadLeads() {
     setLoading(true);
@@ -230,13 +233,24 @@ export default function LeadsPage() {
         emptyIcon={Users}
         emptyTitle="Nenhum lead encontrado"
         emptyDescription="Cadastre um lead manualmente ou use o Scanner PDF"
+        onRowClick={(lead) => {
+          setSelectedLead(lead);
+          setDrawerOpen(true);
+        }}
       />
 
-      {/* Modal */}
+      {/* Modal Novo Lead */}
       <LeadDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={loadLeads}
+      />
+
+      {/* Drawer Detalhes do Lead */}
+      <LeadDetailDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        lead={selectedLead}
       />
     </div>
   );

@@ -22,6 +22,9 @@ import {
   Shield,
   Zap,
   TrendingUp,
+  XCircle,
+  DollarSign,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -149,14 +152,6 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
       `Descubra quanto você pode economizar no plano de saúde!\n\nUse a calculadora gratuita e veja a diferença:\n${linkIndicacao}\n\nÉ rápido, fácil e sem compromisso!`
     );
     window.open(`https://wa.me/?text=${texto}`, '_blank');
-  };
-
-  // Primeiro nome apenas (mascarar sobrenome para privacidade)
-  const getPrimeiroNome = (nome: string | null) => {
-    if (!nome) return 'Lead';
-    const partes = nome.trim().split(' ');
-    if (partes.length <= 1) return partes[0];
-    return `${partes[0]} ${partes[1]?.[0] || ''}.`;
   };
 
   const formatCurrency = (v: number | null) =>
@@ -414,7 +409,9 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                     <tr className="border-b border-white/[0.06]">
                       <th className="text-left px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Lead</th>
                       <th className="text-center px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Status</th>
-                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Economia Est.</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Valor Fatura</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Plano Novo Est.</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden lg:table-cell">Economia</th>
                       <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden lg:table-cell">Data</th>
                     </tr>
                   </thead>
@@ -428,10 +425,21 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                           animate={{ opacity: 1 }}
                           className="border-b border-white/[0.04] hover:bg-white/[0.02]"
                         >
+                          {/* NOME COMPLETO + Vidas + Indicadores */}
                           <td className="px-4 py-3">
-                            <p className="text-sm text-white font-medium">{getPrimeiroNome(lead.nome)}</p>
-                            <p className="text-[11px] text-white/20 mt-0.5">{lead.qtd_vidas} vida{lead.qtd_vidas !== 1 ? 's' : ''}</p>
+                            <p className="text-sm text-white font-medium">{lead.nome || 'Lead'}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] text-white/20">{lead.qtd_vidas} vida{lead.qtd_vidas !== 1 ? 's' : ''}</span>
+                              {lead.clicou_no_contato && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] text-green-400/70 bg-green-400/5 px-1.5 py-0.5 rounded">
+                                  <MessageCircle className="h-2.5 w-2.5" />
+                                  Contatou
+                                </span>
+                              )}
+                            </div>
                           </td>
+
+                          {/* STATUS (read-only badge) */}
                           <td className="px-4 py-3 text-center">
                             <span
                               className={cn(
@@ -441,6 +449,7 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                               )}
                             >
                               {lead.status === 'fechado' && <CheckCircle className="h-3 w-3" />}
+                              {lead.status === 'perdido' && <XCircle className="h-3 w-3" />}
                               {lead.status === 'em_analise' && <Target className="h-3 w-3" />}
                               {lead.status === 'entrou_em_contato' && <MessageCircle className="h-3 w-3" />}
                               {lead.status === 'simulou' && <Eye className="h-3 w-3" />}
@@ -448,13 +457,41 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                               {statusCfg.label}
                             </span>
                           </td>
+
+                          {/* VALOR DA FATURA (valor atual do cliente) */}
                           <td className="px-4 py-3 text-right hidden md:table-cell">
+                            {lead.valor_atual ? (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <CreditCard className="h-3 w-3 text-white/20" />
+                                <span className="text-sm text-white font-medium">{formatCurrency(lead.valor_atual)}</span>
+                              </div>
+                            ) : (
+                              <span className="text-white/20">—</span>
+                            )}
+                          </td>
+
+                          {/* VALOR ESTIMADO PLANO NOVO */}
+                          <td className="px-4 py-3 text-right hidden md:table-cell">
+                            {lead.valor_estimado_min ? (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <DollarSign className="h-3 w-3 text-[#D4AF37]/40" />
+                                <span className="text-sm text-[#D4AF37] font-medium">{formatCurrency(lead.valor_estimado_min)}</span>
+                              </div>
+                            ) : (
+                              <span className="text-white/20">—</span>
+                            )}
+                          </td>
+
+                          {/* ECONOMIA ESTIMADA */}
+                          <td className="px-4 py-3 text-right hidden lg:table-cell">
                             {lead.economia_estimada ? (
                               <span className="text-sm text-green-400 font-medium">{formatCurrency(lead.economia_estimada)}</span>
                             ) : (
                               <span className="text-white/20">—</span>
                             )}
                           </td>
+
+                          {/* DATA */}
                           <td className="px-4 py-3 text-right text-[11px] text-white/30 hidden lg:table-cell">
                             {formatDate(lead.created_at)}
                           </td>

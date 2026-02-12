@@ -7,4 +7,5 @@ export { DataTable } from './DataTable';
 export type { Column } from './DataTable';
 export { Spinner, PageLoading } from './Spinner';
 export { LeadDialog } from './LeadDialog';
+export { LeadDetailDrawer } from './LeadDetailDrawer';
 export { TarefaDialog } from './TarefaDialog';
