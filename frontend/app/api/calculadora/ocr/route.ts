@@ -4,8 +4,8 @@ import { VertexAI } from '@google-cloud/vertexai';
 export const maxDuration = 60;
 
 // ═══ CONFIGURAÇÃO FIXA — NÃO ALTERAR SEM AUDITORIA ═══
-const VERTEX_MODEL = 'gemini-1.5-flash';
-const VERTEX_LOCATION = 'us-central1';
+const VERTEX_MODEL = 'gemini-2.0-flash-lite-001';
+const VERTEX_LOCATION = 'global';
 
 // ═══ AUTH: Service Account do projeto Adaga Braca (GCP com créditos R$1.700) ═══
 function getVertexAI() {
