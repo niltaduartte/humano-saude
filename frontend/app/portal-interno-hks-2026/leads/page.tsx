@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Users, Phone, Mail, ArrowUpRight, CheckCircle, XCircle, Pause, MessageSquare, Calculator, ScanLine, PenLine, Globe, UserCheck } from 'lucide-react';
 import { getLeads, updateLeadStatus } from '@/app/actions/leads';
+import { getCorretoresMap } from '@/app/actions/indicacoes-admin';
 import type { LeadStatus } from '@/lib/types/database';
 import { LEAD_STATUS } from '@/lib/types/database';
 import {
@@ -52,11 +53,28 @@ function getCorretorSlug(lead: any): string | null {
   return lead?.dados_pdf?.corretor?.slug || null;
 }
 
+/** Extrai o ID do corretor de dados_pdf */
+function getCorretorId(lead: any): string | null {
+  return lead?.dados_pdf?.corretor?.id || null;
+}
+
+/** Retorna o nome do corretor usando o mapa slug/id → nome */
+function getCorretorNome(lead: any, corretorMap: Record<string, string>): string | null {
+  const slug = getCorretorSlug(lead);
+  const id = getCorretorId(lead);
+  if (slug && corretorMap[slug]) return corretorMap[slug];
+  if (id && corretorMap[id]) return corretorMap[id];
+  return slug; // fallback para o slug se não encontrar o nome
+}
+
 // ============================================
 // COLUNAS DA TABELA
 // ============================================
 
-function makeColumns(onStatusChange: (id: string, status: string) => void): Column<any>[] {
+function makeColumns(
+  onStatusChange: (id: string, status: string) => void,
+  corretorMap: Record<string, string>,
+): Column<any>[] {
   return [
     {
       key: 'nome',
@@ -111,14 +129,14 @@ function makeColumns(onStatusChange: (id: string, status: string) => void): Colu
       render: (lead) => {
         const origemKey = lead.origem || 'direto';
         const cfg = ORIGEM_CONFIG[origemKey] || ORIGEM_FALLBACK;
-        const corretor = getCorretorSlug(lead);
+        const corretorNome = getCorretorNome(lead, corretorMap);
         return (
           <div className="flex flex-col gap-1">
             <StatusBadge label={cfg.label} color={cfg.color} icon={cfg.icon} />
-            {corretor && (
+            {corretorNome && (
               <span className="flex items-center gap-1 text-[10px] text-[#D4AF37]">
                 <UserCheck className="h-3 w-3" />
-                {corretor}
+                {corretorNome}
               </span>
             )}
           </div>
@@ -183,6 +201,12 @@ export default function LeadsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [corretorMap, setCorretorMap] = useState<Record<string, string>>({});
+
+  async function loadCorretorMap() {
+    const map = await getCorretoresMap();
+    setCorretorMap(map);
+  }
 
   async function loadLeads() {
     setLoading(true);
@@ -195,6 +219,7 @@ export default function LeadsPage() {
   }
 
   useEffect(() => { loadLeads(); }, [filterStatus]);
+  useEffect(() => { loadCorretorMap(); }, []);
 
   async function handleStatusChange(leadId: string, newStatus: string) {
     const result = await updateLeadStatus(leadId, newStatus);
@@ -206,7 +231,7 @@ export default function LeadsPage() {
     }
   }
 
-  const columns = useMemo(() => makeColumns(handleStatusChange), []);
+  const columns = useMemo(() => makeColumns(handleStatusChange, corretorMap), [corretorMap]);
 
   const filtered = useMemo(() => {
     let result = leads;
@@ -247,8 +272,8 @@ export default function LeadsPage() {
       const slug = getCorretorSlug(l);
       if (slug) slugs.add(slug);
     });
-    return Array.from(slugs).sort().map((s) => ({ value: s, label: s }));
-  }, [leads]);
+    return Array.from(slugs).sort().map((s) => ({ value: s, label: corretorMap[s] || s }));
+  }, [leads, corretorMap]);
 
   // Contagem de indicações
   const indicacoesCount = useMemo(() => leads.filter((l) => !!getCorretorSlug(l)).length, [leads]);

@@ -232,6 +232,7 @@ const sidebarItems: SidebarItem[] = [
     children: [
       { id: "corretores-lista", label: "Solicitações", icon: UserPlus, href: `${P}/corretores` },
       { id: "corretores-convites", label: "Convites enviados", icon: Send, href: `${P}/corretores/convites` },
+      { id: "corretores-indicacoes", label: "Indicações", icon: Award, href: `${P}/indicacoes` },
     ],
   },
 
