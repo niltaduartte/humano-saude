@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -8,6 +8,13 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import {
   User,
   Phone,
@@ -26,6 +33,11 @@ import {
   ScanLine,
   BarChart3,
   Tag,
+  Download,
+  X,
+  Eye,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -92,10 +104,152 @@ function InfoRow({ label, value, href }: { label: string; value: React.ReactNode
 }
 
 // ============================================
+// PREVIEW MODAL (Popup para visualizar docs/faturas)
+// ============================================
+
+function isImageUrl(url: string): boolean {
+  return /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(url);
+}
+
+function isPdfUrl(url: string): boolean {
+  return /\.pdf/i.test(url);
+}
+
+function getFileName(url: string, fallback: string): string {
+  try {
+    const path = new URL(url).pathname;
+    const name = path.split('/').pop() || fallback;
+    return decodeURIComponent(name);
+  } catch {
+    return fallback;
+  }
+}
+
+interface PreviewModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  url: string | null;
+  title: string;
+}
+
+function PreviewModal({ open, onOpenChange, url, title }: PreviewModalProps) {
+  const [zoom, setZoom] = useState(1);
+
+  if (!url) return null;
+
+  const isImage = isImageUrl(url);
+  const isPdf = isPdfUrl(url);
+  const fileName = getFileName(url, title);
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Fallback: abrir em nova aba
+      window.open(url, '_blank');
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); setZoom(1); }}>
+      <DialogContent className="max-w-[90vw] max-h-[90vh] w-auto bg-[#0a0a0a] border-white/[0.1] text-white p-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-4 pb-3 border-b border-white/[0.06] flex flex-row items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <DialogTitle className="text-sm font-semibold text-white truncate">{title}</DialogTitle>
+            <DialogDescription className="text-[11px] text-white/30 truncate mt-0.5">{fileName}</DialogDescription>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 ml-4">
+            {isImage && (
+              <>
+                <button
+                  onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                  title="Reduzir zoom"
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </button>
+                <span className="text-[10px] text-white/30 w-10 text-center">{Math.round(zoom * 100)}%</span>
+                <button
+                  onClick={() => setZoom(Math.min(3, zoom + 0.25))}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                  title="Aumentar zoom"
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            <button
+              onClick={handleDownload}
+              className="p-1.5 rounded-lg hover:bg-[#D4AF37]/20 text-[#D4AF37]/60 hover:text-[#D4AF37] transition-colors"
+              title="Baixar arquivo"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+              title="Abrir em nova aba"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
+        </DialogHeader>
+
+        <div className="overflow-auto max-h-[calc(90vh-60px)] flex items-center justify-center bg-black/30 p-4">
+          {isImage ? (
+            <img
+              src={url}
+              alt={title}
+              className="max-w-full transition-transform duration-200 rounded-lg"
+              style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
+              draggable={false}
+            />
+          ) : isPdf ? (
+            <iframe
+              src={url}
+              className="w-full min-h-[70vh] rounded-lg border border-white/[0.06]"
+              title={title}
+              style={{ minWidth: '700px' }}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-4 py-12">
+              <FileText className="h-16 w-16 text-white/20" />
+              <p className="text-sm text-white/50">Preview não disponível para este tipo de arquivo</p>
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-sm hover:bg-[#D4AF37]/20 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                Baixar arquivo
+              </button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
 
 export function LeadDetailDrawer({ open, onOpenChange, lead }: LeadDetailDrawerProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState('');
+
   if (!lead) return null;
 
   const dadosPdf = lead.dados_pdf || {};
@@ -106,6 +260,12 @@ export function LeadDetailDrawer({ open, onOpenChange, lead }: LeadDetailDrawerP
   const corretor = dadosPdf.corretor || null;
   const faturaUrl = dadosOcr.fatura_url || null;
   const historico: any[] = Array.isArray(lead.historico) ? lead.historico : [];
+
+  const openPreview = (url: string, title: string) => {
+    setPreviewUrl(url);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -164,11 +324,9 @@ export function LeadDetailDrawer({ open, onOpenChange, lead }: LeadDetailDrawerP
           {faturaUrl && (
             <Section title="Fatura Original" icon={ImageIcon}>
               <div className="space-y-3">
-                <a
-                  href={faturaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block group"
+                <button
+                  onClick={() => openPreview(faturaUrl, 'Fatura Original')}
+                  className="block w-full text-left group cursor-pointer"
                 >
                   {faturaUrl.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
                     <div className="relative rounded-lg overflow-hidden border border-white/[0.1] group-hover:border-[#D4AF37]/40 transition-colors">
@@ -177,9 +335,10 @@ export function LeadDetailDrawer({ open, onOpenChange, lead }: LeadDetailDrawerP
                         alt="Fatura original"
                         className="w-full max-h-[400px] object-contain bg-black/50"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <span className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-white bg-black/60 px-3 py-1.5 rounded-lg transition-opacity">
-                          Abrir em nova aba
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                        <span className="opacity-0 group-hover:opacity-100 flex items-center gap-2 text-xs font-semibold text-white bg-black/60 px-4 py-2 rounded-lg transition-opacity">
+                          <Eye className="h-4 w-4" />
+                          Visualizar
                         </span>
                       </div>
                     </div>
@@ -188,12 +347,12 @@ export function LeadDetailDrawer({ open, onOpenChange, lead }: LeadDetailDrawerP
                       <FileText className="h-8 w-8 text-[#D4AF37]" />
                       <div>
                         <p className="text-sm text-white font-medium">Ver fatura original</p>
-                        <p className="text-xs text-white/30">Clique para abrir</p>
+                        <p className="text-xs text-white/30">Clique para visualizar</p>
                       </div>
-                      <ExternalLink className="h-4 w-4 text-white/20 ml-auto" />
+                      <Eye className="h-4 w-4 text-white/20 ml-auto group-hover:text-[#D4AF37]" />
                     </div>
                   )}
-                </a>
+                </button>
               </div>
             </Section>
           )}
@@ -294,17 +453,15 @@ export function LeadDetailDrawer({ open, onOpenChange, lead }: LeadDetailDrawerP
             <Section title="Documentos de Adesão" icon={Paperclip}>
               <div className="space-y-2">
                 {Object.entries(lead.dados_pdf.documentos_adesao).map(([key, url]: [string, any]) => (
-                  <a
+                  <button
                     key={key}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 rounded-lg border border-white/[0.06] hover:border-[#D4AF37]/30 transition-colors group"
+                    onClick={() => openPreview(url, key)}
+                    className="flex items-center gap-2 p-2 rounded-lg border border-white/[0.06] hover:border-[#D4AF37]/30 transition-colors group w-full text-left cursor-pointer"
                   >
                     <FileText className="h-4 w-4 text-white/30 group-hover:text-[#D4AF37]" />
-                    <span className="text-xs text-white/60 group-hover:text-white">{key}</span>
-                    <ExternalLink className="h-3 w-3 text-white/20 ml-auto" />
-                  </a>
+                    <span className="text-xs text-white/60 group-hover:text-white flex-1">{key}</span>
+                    <Eye className="h-3.5 w-3.5 text-white/20 group-hover:text-[#D4AF37]" />
+                  </button>
                 ))}
               </div>
             </Section>
@@ -382,6 +539,14 @@ export function LeadDetailDrawer({ open, onOpenChange, lead }: LeadDetailDrawerP
 
         </div>
       </SheetContent>
+
+      {/* Modal de Preview (Fatura / Documentos) */}
+      <PreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        url={previewUrl}
+        title={previewTitle}
+      />
     </Sheet>
   );
 }
