@@ -4,8 +4,8 @@ import { VertexAI } from '@google-cloud/vertexai';
 export const maxDuration = 60;
 
 // ═══ CONFIGURAÇÃO FIXA — NÃO ALTERAR SEM AUDITORIA ═══
-const VERTEX_MODEL = 'gemini-2.0-flash-lite-001';
-const VERTEX_LOCATION = 'global';
+const VERTEX_MODEL = 'gemini-2.0-flash-001';
+const VERTEX_LOCATION = 'us-central1';
 
 // ═══ AUTH: Service Account do projeto Adaga Braca (GCP com créditos R$1.700) ═══
 function getVertexAI() {
@@ -218,6 +218,16 @@ export async function POST(request: NextRequest) {
     console.log(text);
     console.log(`[OCR] ═══ FIM DA RESPOSTA BRUTA ═══`);
 
+    // ═══ DETECÇÃO DE HTML (endpoint errado / auth redirect) ═══
+    if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('<HTML')) {
+      console.error(`[AUDITORIA IA] ⚠️ API RETORNOU HTML! Endpoint incorreto ou redirect de auth.`);
+      console.error(`[AUDITORIA IA] Primeiros 300 chars: ${text.substring(0, 300)}`);
+      return NextResponse.json({
+        success: false,
+        error: 'Erro de configuração do servidor. Contate o suporte.',
+      });
+    }
+
     if (!text || text.length < 10) {
       return NextResponse.json({
         success: false,
@@ -240,7 +250,15 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Erro interno';
+    const errorStr = String(err);
     console.error('[OCR] ❌ Erro:', errorMsg);
+
+    // Detecção de HTML no erro (endpoint inválido retorna HTML)
+    if (errorMsg.includes('<!DOCTYPE') || errorMsg.includes('<html') || errorStr.includes('<!DOCTYPE')) {
+      console.error(`[AUDITORIA IA] ⚠️ RESPOSTA HTML DETECTADA NO ERRO!`);
+      console.error(`[AUDITORIA IA] Isso indica endpoint incorreto. Verifique VERTEX_LOCATION e VERTEX_MODEL.`);
+      console.error(`[AUDITORIA IA] Location atual: ${VERTEX_LOCATION} | Modelo: ${VERTEX_MODEL}`);
+    }
 
     let userMsg = 'Não conseguimos processar o arquivo. Preencha os dados manualmente.';
     if (errorMsg.includes('SAFETY')) {
