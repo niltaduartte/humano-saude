@@ -513,7 +513,12 @@ export default function CalculadoraEconomia({
         setOcrEtapa('✅ Dados extraídos com sucesso!');
         setDadosFatura(data.dados);
         if (data.dados.valor_total) {
-          setValorManual(String(data.dados.valor_total));
+          setValorManual(
+            Number(data.dados.valor_total).toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          );
         }
         if (data.dados.operadora) {
           const listaOperadoras = [
@@ -615,7 +620,13 @@ export default function CalculadoraEconomia({
   };
 
   const calcular = async () => {
-    const valor = parseFloat(valorManual.replace(/[^\d.,]/g, '').replace(',', '.'));
+    // Parse formato brasileiro: 2.251,38 → remove pontos de milhar, troca vírgula por ponto
+    const valorLimpo = valorManual.replace(/[^\d.,]/g, '');
+    const valor = parseFloat(
+      valorLimpo.includes(',')
+        ? valorLimpo.replace(/\./g, '').replace(',', '.')
+        : valorLimpo
+    );
     if (!valor || valor <= 0) {
       toast.error('Informe o valor atual da mensalidade');
       scrollToField(valorRef);
@@ -866,7 +877,8 @@ export default function CalculadoraEconomia({
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        {/* Hero */}
+        {/* Hero — esconde nas etapas resultado e documentos */}
+        {etapa !== 'resultado' && etapa !== 'documentos' && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -987,6 +999,7 @@ export default function CalculadoraEconomia({
             </motion.div>
           </div>
         </motion.div>
+        )}
 
         {/* Steps indicator */}
         <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
@@ -1709,8 +1722,10 @@ export default function CalculadoraEconomia({
                 </p>
               </div>
 
-              {/* Cards das 3 propostas */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-visible">
+              {/* Cards das propostas — centralizados */}
+              <div className={cn(
+                'flex flex-wrap justify-center gap-4 overflow-visible',
+              )}>
                 {resultado.propostas.map((proposta, index) => {
                   const isBest = index === 0;
                   const economiaAnual = Math.round(proposta.economia_valor * 12 * 100) / 100;
@@ -1721,7 +1736,7 @@ export default function CalculadoraEconomia({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.15 }}
                       className={cn(
-                        'relative bg-white/[0.03] border rounded-2xl p-5 backdrop-blur-xl flex flex-col overflow-visible',
+                        'relative bg-white/[0.03] border rounded-2xl p-5 backdrop-blur-xl flex flex-col overflow-visible w-full md:w-[calc(33.333%-1rem)] md:max-w-[320px]',
                         isBest
                           ? 'border-[#D4AF37]/40 ring-1 ring-[#D4AF37]/20 mt-3'
                           : 'border-white/[0.08]',
