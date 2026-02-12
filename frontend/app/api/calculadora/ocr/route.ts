@@ -3,7 +3,11 @@ import { VertexAI } from '@google-cloud/vertexai';
 
 export const maxDuration = 60;
 
-// ═══ AUTH: Service Account do projeto Adaga Braca (GCP com créditos) ═══
+// ═══ CONFIGURAÇÃO FIXA — NÃO ALTERAR SEM AUDITORIA ═══
+const VERTEX_MODEL = 'gemini-1.5-flash';
+const VERTEX_LOCATION = 'us-central1';
+
+// ═══ AUTH: Service Account do projeto Adaga Braca (GCP com créditos R$1.700) ═══
 function getVertexAI() {
   const saJSON = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (!saJSON) {
@@ -12,10 +16,13 @@ function getVertexAI() {
 
   const credentials = JSON.parse(saJSON);
   const projectId = credentials.project_id;
+  const clientEmail = credentials.client_email;
+
+  console.log(`[AUDITORIA IA] Modelo: ${VERTEX_MODEL} | Projeto: ${projectId} | SA: ${clientEmail} | Location: ${VERTEX_LOCATION}`);
 
   return new VertexAI({
     project: projectId,
-    location: 'us-central1',
+    location: VERTEX_LOCATION,
     googleAuthOptions: {
       credentials,
     },
@@ -103,7 +110,7 @@ async function withRetry<T>(
       }
 
       const delay = initialDelayMs * Math.pow(2, attempt);
-      console.log(`[OCR] ⏳ Erro 429/503, tentando novamente em ${delay}ms (tentativa ${attempt + 1}/${maxRetries})...`);
+      console.log(`[OCR] ⏳ Erro 429/503, retry em ${delay}ms (tentativa ${attempt + 1}/${maxRetries})...`);
       await new Promise((r) => setTimeout(r, delay));
     }
   }
@@ -158,10 +165,10 @@ export async function POST(request: NextRequest) {
     const base64Data = Buffer.from(bytes).toString('base64');
     console.log(`[OCR] Base64 gerado: ${(base64Data.length / 1024).toFixed(0)}KB`);
 
-    // ═══ VERTEX AI (Projeto Adaga Braca com créditos GCP) ═══
+    // ═══ VERTEX AI (Projeto Adaga Braca com créditos GCP R$1.700) ═══
     const vertexAI = getVertexAI();
     const model = vertexAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: VERTEX_MODEL,
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: 2000,
@@ -172,7 +179,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`[OCR] Enviando para Vertex AI (gemini-1.5-flash) com retry...`);
+    console.log(`[OCR] Enviando para Vertex AI (${VERTEX_MODEL}) com retry...`);
 
     const text = await withRetry(async () => {
       const result = await model.generateContent({
@@ -241,10 +248,17 @@ export async function POST(request: NextRequest) {
     } else if (errorMsg.includes('too large') || errorMsg.includes('size')) {
       userMsg = 'Arquivo muito grande. Tire um print da fatura e envie como imagem.';
     } else if (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
+      console.error(`[AUDITORIA IA] ⚠️ ERRO 429 RESOURCE_EXHAUSTED após todas as tentativas de retry!`);
+      console.error(`[AUDITORIA IA] Modelo: ${VERTEX_MODEL} | Isso NÃO deveria acontecer com faturamento ativo.`);
+      console.error(`[AUDITORIA IA] Checklist: 1) Vertex AI API ativa? 2) Cota do projeto no GCP Console? 3) Billing vinculado?`);
       userMsg = 'Sistema temporariamente ocupado. Tente novamente em 30 segundos.';
     } else if (errorMsg.includes('GOOGLE_SERVICE_ACCOUNT_JSON')) {
       userMsg = 'Erro de configuração do servidor. Contate o suporte.';
-      console.error('[OCR] ⚠️ GOOGLE_SERVICE_ACCOUNT_JSON não está configurada na Vercel!');
+      console.error('[AUDITORIA IA] ⚠️ GOOGLE_SERVICE_ACCOUNT_JSON não está configurada!');
+    } else if (errorMsg.includes('PERMISSION_DENIED') || errorMsg.includes('403')) {
+      console.error(`[AUDITORIA IA] ⚠️ ERRO 403 PERMISSION_DENIED!`);
+      console.error(`[AUDITORIA IA] A Service Account não tem papel "Usuário do Vertex AI" no projeto.`);
+      userMsg = 'Erro de permissão no servidor. Contate o suporte.';
     }
 
     return NextResponse.json({ success: false, error: userMsg });
