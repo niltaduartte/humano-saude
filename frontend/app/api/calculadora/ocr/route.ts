@@ -82,8 +82,8 @@ async function callGPTVision(messages: Array<{ role: string; content: unknown }>
   return result.choices?.[0]?.message?.content?.trim() || '';
 }
 
-// ─── Chamar Gemini 2.0 Flash para PDFs ───
-async function callGeminiPDF(pdfBase64: string) {
+// ─── Chamar Gemini 2.0 Flash para PDFs (com retry) ───
+async function callGeminiPDF(pdfBase64: string, maxRetries = 2): Promise<string> {
   if (!GOOGLE_AI_API_KEY) {
     throw new Error('Google AI não configurada');
   }
@@ -91,20 +91,49 @@ async function callGeminiPDF(pdfBase64: string) {
   const genAI = new GoogleGenerativeAI(GOOGLE_AI_API_KEY);
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        mimeType: 'application/pdf',
-        data: pdfBase64,
-      },
-    },
-    {
-      text: `${SYSTEM_PROMPT}\n\nAnalise este PDF de fatura/boleto de plano de saúde e extraia todos os dados solicitados. Preste atenção especial ao PAGADOR/SACADO (nome, CNPJ ou CPF) que geralmente aparece próximo ao código de barras.`,
-    },
-  ]);
+  let lastError: Error | null = null;
 
-  const response = await result.response;
-  return response.text();
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[OCR] Gemini tentativa ${attempt}/${maxRetries}...`);
+      const result = await model.generateContent([
+        {
+          inlineData: {
+            mimeType: 'application/pdf',
+            data: pdfBase64,
+          },
+        },
+        {
+          text: `${SYSTEM_PROMPT}\n\nAnalise este PDF de fatura/boleto de plano de saúde e extraia todos os dados solicitados. Preste atenção especial ao PAGADOR/SACADO (nome, CNPJ ou CPF) que geralmente aparece próximo ao código de barras.`,
+        },
+      ]);
+
+      const response = await result.response;
+      const text = response.text();
+
+      // Verificar se a resposta contém JSON válido
+      if (!text || text.length < 10) {
+        throw new Error('Resposta vazia do Gemini');
+      }
+
+      // Tentar parsear para garantir que é JSON válido
+      parseResponse(text);
+
+      return text;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.error(`[OCR] Gemini tentativa ${attempt} falhou:`, lastError.message);
+
+      if (attempt < maxRetries) {
+        // Esperar antes de tentar novamente (backoff exponencial)
+        const waitMs = attempt * 1500;
+        console.log(`[OCR] Aguardando ${waitMs}ms antes de retry...`);
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+      }
+    }
+  }
+
+  throw lastError || new Error('Gemini falhou após todas as tentativas');
 }
 
 // ─── Parsear resposta JSON ───

@@ -239,23 +239,12 @@ export default function CalculadoraEconomia({
   // Tipo pessoa (PF/PJ)
   const [tipoPessoa, setTipoPessoa] = useState<'PF' | 'PJ'>('PF');
 
-  // WhatsApp float
-  const [whatsFloatVisible, setWhatsFloatVisible] = useState(false);
-  const [whatsMessageIndex, setWhatsMessageIndex] = useState(0);
-
   // Carrossel depoimentos
   const [depoimentoIndex, setDepoimentoIndex] = useState(0);
 
   // Documentos para adesão
   const [documentos, setDocumentos] = useState<DocumentoUpload[]>(DOCUMENTOS_INICIAIS);
   const [enviadoDocumentos, setEnviadoDocumentos] = useState(false);
-
-  const whatsMessages = [
-    '💬 Economize até 40%',
-    '⚡ Resposta rápida',
-    '🎯 Sem custo inicial',
-    '✨ Análise gratuita',
-  ];
 
   // ─── CÂMERA ──────────────────────────────────
 
@@ -319,24 +308,6 @@ export default function CalculadoraEconomia({
       0.92,
     );
   };
-
-  // ─── WHATSAPP FLOAT ──────────────────────────
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setWhatsFloatVisible(window.scrollY > 300);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWhatsMessageIndex((prev) => (prev + 1) % whatsMessages.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [whatsMessages.length]);
 
   // ─── CARROSSEL DEPOIMENTOS ──────────────────
   const totalPages = Math.ceil(DEPOIMENTOS.length / 3);
@@ -518,13 +489,15 @@ export default function CalculadoraEconomia({
         } catch { /* não era JSON */ }
         console.error(`[Upload] HTTP ${res.status}: ${errorMsg}`);
         setOcrProgresso(100);
-        setOcrEtapa('⚠️ Erro ao ler — tente novamente');
-        toast.error(errorMsg);
+        setOcrEtapa('⚠️ Não foi possível ler automaticamente');
+        toast.error(errorMsg, { duration: 5000 });
         setTimeout(() => {
           setUploading(false);
           setPreviewUrl(null);
           setOcrProgresso(0);
           setOcrEtapa('');
+          setEtapa('dados');
+          toast.info('Preencha os dados manualmente abaixo', { duration: 4000 });
         }, 2000);
         return;
       }
@@ -575,26 +548,30 @@ export default function CalculadoraEconomia({
           setEtapa('dados');
         }, 1500);
       } else {
-        setOcrEtapa('⚠️ Não conseguiu ler — tente novamente');
-        toast.error(data.error || 'Não foi possível ler a fatura. Tente enviar novamente.');
+        setOcrEtapa('⚠️ Não conseguiu ler — preencha manualmente');
+        toast.error('Não foi possível ler a fatura automaticamente.', { duration: 4000 });
         setTimeout(() => {
           setUploading(false);
           setPreviewUrl(null);
           setOcrProgresso(0);
           setOcrEtapa('');
+          setEtapa('dados');
+          toast.info('Preencha os dados manualmente abaixo', { duration: 4000 });
         }, 2500);
       }
     } catch (err) {
       clearInterval(progressInterval);
       console.error('[Upload] Erro:', err);
       setOcrProgresso(100);
-      setOcrEtapa('⚠️ Erro de conexão — tente novamente');
-      toast.error('Erro ao processar fatura. Tente enviar novamente.');
+      setOcrEtapa('⚠️ Erro de conexão');
+      toast.error('Erro ao processar fatura. Tente novamente ou preencha manualmente.', { duration: 5000 });
       setTimeout(() => {
         setUploading(false);
         setPreviewUrl(null);
         setOcrProgresso(0);
         setOcrEtapa('');
+        setEtapa('dados');
+        toast.info('Preencha os dados manualmente abaixo', { duration: 4000 });
       }, 2500);
     }
   }, [compressImage, pdfToPreviewImage]);
@@ -830,8 +807,9 @@ export default function CalculadoraEconomia({
     }
 
     const melhorProposta = resultado?.propostas?.[0];
+    const valorAtualStr = resultado?.valorAtual ? formatCurrency(resultado.valorAtual) : '';
     const msg = encodeURIComponent(
-      `Olá! Fiz uma simulação e gostaria de saber mais sobre como economizar no meu plano de saúde. Meu valor atual é R$ ${resultado?.valorAtual?.toFixed(2) || ''}${melhorProposta ? ` e encontrei economia de até ${melhorProposta.economia_pct}% com ${melhorProposta.operadora_nome}` : ''}.`,
+      `Olá! Fiz uma simulação e gostaria de saber mais sobre como economizar no meu plano de saúde. Meu valor atual é ${valorAtualStr}${melhorProposta ? ` e encontrei economia de até ${melhorProposta.economia_pct}% com ${melhorProposta.operadora_nome}` : ''}.`,
     );
     window.open(`https://wa.me/5521988179407?text=${msg}`, '_blank');
   };
@@ -1812,23 +1790,59 @@ export default function CalculadoraEconomia({
                       </div>
 
                       <button
-                        onClick={handleContatoWhatsApp}
+                        onClick={() => {
+                          if (leadId && !contatoClicado) {
+                            marcarClicouContato(leadId);
+                            setContatoClicado(true);
+                          }
+                          const valorAtualStr = resultado?.valorAtual ? formatCurrency(resultado.valorAtual) : '';
+                          const msg = encodeURIComponent(
+                            `Olá! Fiz uma simulação e quero a proposta do plano *${proposta.plano_nome}* da *${proposta.operadora_nome}*. Valor atual: ${valorAtualStr} → Novo valor: ${formatCurrency(proposta.valor_total)} (economia de ${proposta.economia_pct}%).`,
+                          );
+                          window.open(`https://wa.me/5521988179407?text=${msg}`, '_blank');
+                        }}
                         className={cn(
                           'w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all',
                           isBest
                             ? 'bg-gradient-to-r from-[#D4AF37] to-[#F6E05E] text-black hover:shadow-lg hover:shadow-[#D4AF37]/20'
-                            : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/[0.08]',
+                            : 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 hover:border-[#D4AF37]/50',
                         )}
                       >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.52.909 3.033 1.389 4.625 1.39 5.313 0 9.636-4.322 9.638-9.634.001-2.574-1.001-4.995-2.823-6.818-1.821-1.822-4.241-2.826-6.816-2.827-5.313 0-9.636 4.323-9.638 9.636-.001 1.761.474 3.483 1.378 5.008l-.995 3.633 3.731-.978zm10.748-6.377c-.283-.141-1.669-.824-1.928-.918-.258-.094-.446-.141-.634.141-.188.281-.727.918-.891 1.104-.164.187-.328.21-.611.069-.283-.141-1.194-.441-2.274-1.405-.841-.75-1.408-1.676-1.573-1.958-.164-.282-.018-.434.123-.574.127-.127.283-.329.424-.494.141-.164.188-.282.283-.47.094-.188.047-.353-.023-.494-.071-.141-.634-1.529-.868-2.094-.229-.553-.46-.478-.634-.487-.164-.007-.353-.008-.542-.008s-.494.07-.753.353c-.259.282-.988.965-.988 2.353s1.012 2.729 1.153 2.917c.141.188 1.992 3.041 4.825 4.264.674.291 1.2.464 1.61.594.677.215 1.293.185 1.781.112.544-.081 1.669-.682 1.904-1.341.235-.659.235-1.223.164-1.341-.07-.117-.258-.188-.541-.329z"/>
                         </svg>
-                        {isBest ? 'Quero essa proposta' : 'Saber mais'}
+                        Quero essa proposta
                       </button>
                     </motion.div>
                   );
                 })}
               </div>
+
+              {/* CTA Documentos — agilizar proposta (logo após cards) */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-gradient-to-br from-[#D4AF37]/5 to-[#D4AF37]/[0.02] border border-[#D4AF37]/20 rounded-2xl p-6 text-center"
+              >
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-[#D4AF37]/10 mb-3">
+                  <FileCheck className="h-6 w-6 text-[#D4AF37]" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  Quer agilizar sua proposta e garantir o desconto?
+                </h3>
+                <p className="text-sm text-white/40 mb-4 max-w-md mx-auto">
+                  Envie agora os documentos necessários para adesão e nossa equipe já inicia o processo de migração.
+                </p>
+                <button
+                  onClick={() => setEtapa('documentos')}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#D4AF37] text-black font-bold text-sm hover:bg-[#F6E05E] transition-all"
+                >
+                  <Upload className="h-4 w-4" />
+                  Enviar documentos
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </motion.div>
 
               {/* Aviso migração/cancelamento */}
               <motion.div
@@ -1866,7 +1880,7 @@ export default function CalculadoraEconomia({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={handleContatoWhatsApp}
-                    className="flex items-center justify-center gap-2 py-4 rounded-xl bg-[#25D366] text-white font-bold text-sm hover:bg-[#20bd5a] transition-all"
+                    className="flex items-center justify-center gap-2 py-4 rounded-xl bg-[#128C7E] text-white font-bold text-sm hover:bg-[#075E54] transition-all"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.52.909 3.033 1.389 4.625 1.39 5.313 0 9.636-4.322 9.638-9.634.001-2.574-1.001-4.995-2.823-6.818-1.821-1.822-4.241-2.826-6.816-2.827-5.313 0-9.636 4.323-9.638 9.636-.001 1.761.474 3.483 1.378 5.008l-.995 3.633 3.731-.978zm10.748-6.377c-.283-.141-1.669-.824-1.928-.918-.258-.094-.446-.141-.634.141-.188.281-.727.918-.891 1.104-.164.187-.328.21-.611.069-.283-.141-1.194-.441-2.274-1.405-.841-.75-1.408-1.676-1.573-1.958-.164-.282-.018-.434.123-.574.127-.127.283-.329.424-.494.141-.164.188-.282.283-.47.094-.188.047-.353-.023-.494-.071-.141-.634-1.529-.868-2.094-.229-.553-.46-.478-.634-.487-.164-.007-.353-.008-.542-.008s-.494.07-.753.353c-.259.282-.988.965-.988 2.353s1.012 2.729 1.153 2.917c.141.188 1.992 3.041 4.825 4.264.674.291 1.2.464 1.61.594.677.215 1.293.185 1.781.112.544-.081 1.669-.682 1.904-1.341.235-.659.235-1.223.164-1.341-.07-.117-.258-.188-.541-.329z"/>
@@ -1889,32 +1903,6 @@ export default function CalculadoraEconomia({
                   </p>
                 )}
               </div>
-
-              {/* CTA Documentos — agilizar proposta */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                className="bg-gradient-to-br from-[#D4AF37]/5 to-[#D4AF37]/[0.02] border border-[#D4AF37]/20 rounded-2xl p-6 text-center"
-              >
-                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-[#D4AF37]/10 mb-3">
-                  <FileCheck className="h-6 w-6 text-[#D4AF37]" />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">
-                  Quer agilizar sua proposta?
-                </h3>
-                <p className="text-sm text-white/40 mb-4 max-w-md mx-auto">
-                  Envie agora os documentos necessários para adesão e nossa equipe já inicia o processo de migração.
-                </p>
-                <button
-                  onClick={() => setEtapa('documentos')}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#D4AF37] text-black font-bold text-sm hover:bg-[#F6E05E] transition-all"
-                >
-                  <Upload className="h-4 w-4" />
-                  Enviar documentos
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </motion.div>
 
               {/* Trust badges */}
               <div className="flex items-center justify-center gap-6 text-xs text-white/30 flex-wrap">
@@ -2287,41 +2275,6 @@ export default function CalculadoraEconomia({
           </div>
         </div>
       </footer>
-
-      {/* Floating WhatsApp */}
-      <div
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ${
-          whatsFloatVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
-        }`}
-      >
-        {/* Message Bubble */}
-        <div className="absolute bottom-20 right-0 mb-2 animate-bounce">
-          <div className="bg-white px-5 py-2.5 rounded-2xl shadow-2xl border border-gray-200 whitespace-nowrap">
-            <p className="text-sm font-bold text-gray-900">
-              {whatsMessages[whatsMessageIndex]}
-            </p>
-          </div>
-          <div className="absolute -bottom-2 right-6 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white" />
-        </div>
-
-        {/* WhatsApp Button */}
-        <a
-          href="https://wa.me/5521988179407?text=Ol%C3%A1!%20Vim%20do%20link%20de%20economia%20e%20quero%20saber%20mais%20sobre%20redu%C3%A7%C3%A3o%20do%20meu%20plano%20de%20sa%C3%BAde."
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center w-16 h-16 bg-[#25D366] rounded-full shadow-2xl hover:scale-110 transition-transform duration-300"
-          aria-label="Falar no WhatsApp"
-        >
-          <span className="absolute inline-flex h-full w-full rounded-full bg-[#25D366] opacity-75 animate-ping" />
-          <svg
-            className="w-9 h-9 text-white relative z-10"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.52.909 3.033 1.389 4.625 1.39 5.313 0 9.636-4.322 9.638-9.634.001-2.574-1.001-4.995-2.823-6.818-1.821-1.822-4.241-2.826-6.816-2.827-5.313 0-9.636 4.323-9.638 9.636-.001 1.761.474 3.483 1.378 5.008l-.995 3.633 3.731-.978zm10.748-6.377c-.283-.141-1.669-.824-1.928-.918-.258-.094-.446-.141-.634.141-.188.281-.727.918-.891 1.104-.164.187-.328.21-.611.069-.283-.141-1.194-.441-2.274-1.405-.841-.75-1.408-1.676-1.573-1.958-.164-.282-.018-.434.123-.574.127-.127.283-.329.424-.494.141-.164.188-.282.283-.47.094-.188.047-.353-.023-.494-.071-.141-.634-1.529-.868-2.094-.229-.553-.46-.478-.634-.487-.164-.007-.353-.008-.542-.008s-.494.07-.753.353c-.259.282-.988.965-.988 2.353s1.012 2.729 1.153 2.917c.141.188 1.992 3.041 4.825 4.264.674.291 1.2.464 1.61.594.677.215 1.293.185 1.781.112.544-.081 1.669-.682 1.904-1.341.235-.659.235-1.223.164-1.341-.07-.117-.258-.188-.541-.329z" />
-          </svg>
-        </a>
-      </div>
     </div>
   );
 }
