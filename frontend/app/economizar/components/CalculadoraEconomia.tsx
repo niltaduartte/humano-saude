@@ -467,44 +467,37 @@ export default function CalculadoraEconomia({
       }
     }, 1200);
 
-    try {
-      const formData = new FormData();
-      formData.append('fatura', file);
-
-      console.log(`[Upload] Enviando: ${file.name}, size: ${(file.size / 1024).toFixed(0)}KB, type: ${file.type}, isPDF: ${isPDF}`);
-
-      const res = await fetch('/api/calculadora/ocr', {
-        method: 'POST',
-        body: formData,
-      });
-
-      clearInterval(progressInterval);
-
-      // Se HTTP error
+    // Função interna para chamar a API OCR
+    const chamarOCR = async (): Promise<{ success: boolean; dados?: DadosFatura; error?: string }> => {
+      const fd = new FormData();
+      fd.append('fatura', file);
+      const res = await fetch('/api/calculadora/ocr', { method: 'POST', body: fd });
       if (!res.ok) {
         let errorMsg = 'Erro ao processar a fatura.';
-        try {
-          const errData = await res.json();
-          errorMsg = errData.error || errorMsg;
-        } catch { /* não era JSON */ }
-        console.error(`[Upload] HTTP ${res.status}: ${errorMsg}`);
-        setOcrProgresso(100);
-        setOcrEtapa('⚠️ Não foi possível ler automaticamente');
-        toast.error(errorMsg, { duration: 5000 });
-        setTimeout(() => {
-          setUploading(false);
-          setPreviewUrl(null);
-          setOcrProgresso(0);
-          setOcrEtapa('');
-          setEtapa('dados');
-          toast.info('Preencha os dados manualmente abaixo', { duration: 4000 });
-        }, 2000);
-        return;
+        try { const errData = await res.json(); errorMsg = errData.error || errorMsg; } catch { /* */ }
+        return { success: false, error: errorMsg };
+      }
+      return await res.json();
+    };
+
+    try {
+      console.log(`[Upload] Enviando: ${file.name}, size: ${(file.size / 1024).toFixed(0)}KB, type: ${file.type}, isPDF: ${isPDF}`);
+
+      // Tentativa 1
+      let data = await chamarOCR();
+      console.log('[Upload] Tentativa 1:', data.success ? '✅' : '❌', JSON.stringify(data).substring(0, 300));
+
+      // Auto-retry: se falhou, tenta uma segunda vez automaticamente
+      if (!data.success) {
+        console.log('[Upload] Auto-retry: tentando segunda vez...');
+        setOcrEtapa('🔄 Tentando novamente com outro método...');
+        setOcrProgresso(50);
+        await new Promise(r => setTimeout(r, 1500));
+        data = await chamarOCR();
+        console.log('[Upload] Tentativa 2:', data.success ? '✅' : '❌', JSON.stringify(data).substring(0, 300));
       }
 
-      const data = await res.json();
-      console.log('[Upload] Response:', JSON.stringify(data).substring(0, 500));
-
+      clearInterval(progressInterval);
       setOcrProgresso(100);
 
       if (data.success && data.dados) {
@@ -514,7 +507,6 @@ export default function CalculadoraEconomia({
           setValorManual(String(data.dados.valor_total));
         }
         if (data.dados.operadora) {
-          // Tentar casar com operadora da lista
           const listaOperadoras = [
             'Amil', 'Bradesco Saúde', 'SulAmérica', 'Unimed',
             'Porto Saúde', 'Prevent Senior', 'MedSênior',
@@ -527,7 +519,6 @@ export default function CalculadoraEconomia({
           );
           setOperadoraManual(match || operadoraDetectada);
         }
-        // Faixas etárias da IA (Gemini detecta do PDF)
         if (data.dados.faixas_etarias && Array.isArray(data.dados.faixas_etarias) && data.dados.faixas_etarias.length > 0) {
           setIdades(data.dados.faixas_etarias);
         } else if (data.dados.beneficiarios && data.dados.beneficiarios > 0) {
@@ -537,19 +528,18 @@ export default function CalculadoraEconomia({
         if (data.dados.tipo_pessoa === 'PF' || data.dados.tipo_pessoa === 'PJ') {
           setTipoPessoa(data.dados.tipo_pessoa);
         }
-        // Nome do titular / razão social
         if (data.dados.titular || data.dados.razao_social) {
           setNome(data.dados.razao_social || data.dados.titular || '');
         }
         toast.success('Dados extraídos com sucesso!');
-        // Avança para dados somente com sucesso
         setTimeout(() => {
           setUploading(false);
           setEtapa('dados');
         }, 1500);
       } else {
+        const errorMsg = data.error || 'Não foi possível ler a fatura automaticamente.';
         setOcrEtapa('⚠️ Não conseguiu ler — preencha manualmente');
-        toast.error('Não foi possível ler a fatura automaticamente.', { duration: 4000 });
+        toast.error(errorMsg, { duration: 5000 });
         setTimeout(() => {
           setUploading(false);
           setPreviewUrl(null);

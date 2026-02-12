@@ -6,38 +6,34 @@ export const maxDuration = 60;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 
-// ─── Prompt compartilhado (melhorado) ───
+// ─── Prompt compartilhado ───
 const SYSTEM_PROMPT = `Você é um especialista em extrair dados de faturas/boletos de planos de saúde brasileiros.
 Analise o conteúdo da fatura/boleto e extraia EXATAMENTE estas informações em formato JSON:
 
 {
-  "operadora": "nome da operadora de saúde (ex: Amil, Bradesco Saúde, SulAmérica, Unimed, Porto Saúde, Prevent Senior, MedSênior, Assim Saúde, Golden Cross, NotreDame Intermédica, Hapvida, São Francisco)",
+  "operadora": "nome da operadora de saúde (ex: Amil, Bradesco Saúde, SulAmérica, Unimed, Porto Saúde, Prevent Senior, MedSênior, Assim Saúde, Golden Cross, NotreDame Intermédica, Hapvida, São Francisco, Leve Saúde)",
   "plano": "nome/tipo do plano se visível",
   "valor_total": número decimal do valor total da fatura/boleto (apenas o número, sem R$),
   "vencimento": "data de vencimento se visível (DD/MM/YYYY)",
   "beneficiarios": número de beneficiários/vidas (conte a quantidade de nomes listados se houver uma lista de beneficiários),
-  "titular": "nome do titular/responsável financeiro/pagador — procure no campo 'Pagador', 'Sacado', 'Beneficiário do boleto', 'Cliente' ou 'Titular'",
-  "razao_social": "Razão Social ou nome completo do pagador/sacado — se for empresa, copie o nome da empresa. Se for pessoa física, copie o nome completo",
-  "documento": "CNPJ (XX.XXX.XXX/XXXX-XX) ou CPF (XXX.XXX.XXX-XX) do pagador/sacado — procure próximo ao código de barras, ao nome do pagador, ou nos dados do sacado/pagador",
+  "titular": "nome do titular/responsável financeiro/pagador",
+  "razao_social": "Razão Social ou nome completo do pagador/sacado",
+  "documento": "CNPJ (XX.XXX.XXX/XXXX-XX) ou CPF (XXX.XXX.XXX-XX) do pagador/sacado",
   "tipo_pessoa": "PF" ou "PJ",
-  "faixas_etarias": ["lista de faixas etárias dos beneficiários se visível, no formato ANS: 0-18, 19-23, 24-28, 29-33, 34-38, 39-43, 44-48, 49-53, 54-58, 59+"],
+  "faixas_etarias": ["lista de faixas etárias dos beneficiários no formato ANS: 0-18, 19-23, 24-28, 29-33, 34-38, 39-43, 44-48, 49-53, 54-58, 59+"],
   "confianca": número de 0 a 100 indicando sua confiança na extração
 }
 
-INSTRUÇÕES IMPORTANTES:
-1. OPERADORA: É a empresa de plano de saúde (não confunda com o banco do boleto). Procure logotipo, nome no cabeçalho, ou na descrição do serviço.
-2. PAGADOR/SACADO: O campo próximo ao código de barras geralmente tem "Pagador" ou "Sacado" com nome, CNPJ/CPF e endereço.
-3. CNPJ vs CPF:
-   - CNPJ (XX.XXX.XXX/XXXX-XX) = PJ
-   - CPF (XXX.XXX.XXX-XX) = PF
-   - "LTDA", "S/A", "ME", "EIRELI", "EPP", "Razão Social" = PJ
-4. FAIXAS ETÁRIAS: Se houver lista de beneficiários com idades ou datas de nascimento, calcule a faixa de cada um no padrão ANS.
-5. VALOR: Procure o valor total da mensalidade/boleto. Pode estar como "Valor do documento", "Total", "Valor cobrado".
-
+INSTRUÇÕES:
+1. OPERADORA: A empresa de plano de saúde (não o banco do boleto).
+2. PAGADOR/SACADO: Campo próximo ao código de barras.
+3. CNPJ = PJ, CPF = PF, "LTDA", "S/A", "ME", "EIRELI" = PJ.
+4. FAIXAS ETÁRIAS: Se houver lista de beneficiários com idades/datas de nascimento, calcule a faixa ANS.
+5. VALOR: Procure "Valor do documento", "Total", "Valor cobrado".
 Se não conseguir identificar algum campo, use null.
-Retorne APENAS o JSON válido, sem markdown, sem texto extra, sem explicações.`;
+Retorne APENAS o JSON válido, sem markdown, sem texto extra.`;
 
-// ─── Chamar GPT Vision para imagens ───
+// ─── GPT Vision (imagens) ───
 async function callGPTVision(messages: Array<{ role: string; content: unknown }>) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -57,33 +53,21 @@ async function callGPTVision(messages: Array<{ role: string; content: unknown }>
     const errorText = await response.text();
     console.error(`[OCR] OpenAI error (${response.status}):`, errorText);
 
-    let openaiError = '';
-    try {
-      const errObj = JSON.parse(errorText);
-      openaiError = errObj?.error?.message || '';
-    } catch { /* */ }
-
     if (response.status === 400) {
-      let errorMsg = 'Não foi possível processar o arquivo.';
-      if (openaiError.includes('image') || openaiError.includes('Could not process')) {
-        errorMsg = 'A imagem não pôde ser lida. Tente uma foto mais nítida ou envie como PDF.';
-      } else if (openaiError.includes('too large') || openaiError.includes('maximum')) {
-        errorMsg = 'Arquivo muito grande. Tente enviar com resolução menor.';
-      }
-      throw new Error(errorMsg);
+      throw new Error('Imagem não pôde ser processada. Tente uma foto mais nítida.');
     }
     if (response.status === 429) {
-      throw new Error('Muitas requisições. Aguarde alguns segundos e tente novamente.');
+      throw new Error('Muitas requisições. Aguarde alguns segundos.');
     }
-    throw new Error('Erro ao processar com IA. Tente novamente.');
+    throw new Error(`OpenAI erro ${response.status}`);
   }
 
   const result = await response.json();
   return result.choices?.[0]?.message?.content?.trim() || '';
 }
 
-// ─── Chamar Gemini 2.0 Flash para PDFs (com retry) ───
-async function callGeminiPDF(pdfBase64: string, maxRetries = 2): Promise<string> {
+// ─── Gemini 2.0 Flash (PDFs) com retry robusto ───
+async function callGeminiPDF(pdfBase64: string, maxRetries = 3): Promise<string> {
   if (!GOOGLE_AI_API_KEY) {
     throw new Error('Google AI não configurada');
   }
@@ -96,6 +80,7 @@ async function callGeminiPDF(pdfBase64: string, maxRetries = 2): Promise<string>
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[OCR] Gemini tentativa ${attempt}/${maxRetries}...`);
+
       const result = await model.generateContent([
         {
           inlineData: {
@@ -104,29 +89,27 @@ async function callGeminiPDF(pdfBase64: string, maxRetries = 2): Promise<string>
           },
         },
         {
-          text: `${SYSTEM_PROMPT}\n\nAnalise este PDF de fatura/boleto de plano de saúde e extraia todos os dados solicitados. Preste atenção especial ao PAGADOR/SACADO (nome, CNPJ ou CPF) que geralmente aparece próximo ao código de barras.`,
+          text: `${SYSTEM_PROMPT}\n\nAnalise este PDF de fatura/boleto de plano de saúde e extraia todos os dados solicitados.`,
         },
       ]);
 
       const response = await result.response;
       const text = response.text();
 
-      // Verificar se a resposta contém JSON válido
       if (!text || text.length < 10) {
         throw new Error('Resposta vazia do Gemini');
       }
 
-      // Tentar parsear para garantir que é JSON válido
+      // Validar que é JSON parseável
       parseResponse(text);
-
+      console.log(`[OCR] Gemini sucesso na tentativa ${attempt}`);
       return text;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       console.error(`[OCR] Gemini tentativa ${attempt} falhou:`, lastError.message);
 
       if (attempt < maxRetries) {
-        // Esperar antes de tentar novamente (backoff exponencial)
-        const waitMs = attempt * 1500;
+        const waitMs = attempt * 2000;
         console.log(`[OCR] Aguardando ${waitMs}ms antes de retry...`);
         await new Promise((resolve) => setTimeout(resolve, waitMs));
       }
@@ -136,15 +119,47 @@ async function callGeminiPDF(pdfBase64: string, maxRetries = 2): Promise<string>
   throw lastError || new Error('Gemini falhou após todas as tentativas');
 }
 
+// ─── Gemini com PDF como imagem (fallback alternativo) ───
+async function callGeminiPDFAsImage(pdfBase64: string): Promise<string> {
+  if (!GOOGLE_AI_API_KEY) throw new Error('Google AI não configurada');
+
+  const genAI = new GoogleGenerativeAI(GOOGLE_AI_API_KEY);
+  // Tentar com modelo gemini-1.5-flash que pode lidar diferente
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  console.log('[OCR] Tentando Gemini 1.5 Flash como fallback...');
+
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        mimeType: 'application/pdf',
+        data: pdfBase64,
+      },
+    },
+    {
+      text: `${SYSTEM_PROMPT}\n\nAnalise este PDF de fatura/boleto de plano de saúde e extraia todos os dados solicitados.`,
+    },
+  ]);
+
+  const response = await result.response;
+  const text = response.text();
+
+  if (!text || text.length < 10) {
+    throw new Error('Resposta vazia do Gemini 1.5');
+  }
+
+  parseResponse(text);
+  console.log('[OCR] Gemini 1.5 Flash sucesso');
+  return text;
+}
+
 // ─── Parsear resposta JSON ───
 function parseResponse(content: string) {
-  // Limpar markdown e extrair JSON
   let jsonStr = content
     .replace(/```json\n?/g, '')
     .replace(/```\n?/g, '')
     .trim();
 
-  // Tentar encontrar JSON em caso de texto extra
   const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     jsonStr = jsonMatch[0];
@@ -166,6 +181,54 @@ function parseResponse(content: string) {
   };
 }
 
+// ─── Fallback: pdf-parse + OpenAI text ───
+async function fallbackPDFWithOpenAI(buffer: Buffer): Promise<NextResponse> {
+  try {
+    console.log('[OCR] Fallback: tentando pdf-parse + OpenAI...');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pdfParse = require('pdf-parse');
+    const pdfData = await pdfParse(buffer);
+    const pdfText = pdfData.text?.trim() || '';
+    console.log(`[OCR] pdf-parse extraiu ${pdfText.length} chars`);
+
+    if (pdfText.length < 20) {
+      return NextResponse.json({
+        success: false,
+        error: 'Este PDF parece ser uma imagem escaneada e não conseguimos ler. Tire um print/screenshot da fatura e envie como imagem (JPG/PNG).',
+      });
+    }
+
+    if (!OPENAI_API_KEY) {
+      return NextResponse.json({
+        success: false,
+        error: 'Não foi possível processar este PDF. Tente enviar como imagem.',
+      });
+    }
+
+    const textTruncated = pdfText.substring(0, 4000);
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `Extraia os dados desta fatura de plano de saúde:\n\n---\n${textTruncated}\n---`,
+      },
+    ];
+
+    const content = await callGPTVision(messages);
+    console.log('[OCR] Fallback GPT resposta:', content.substring(0, 300));
+
+    const dados = parseResponse(content);
+    return NextResponse.json({ success: true, dados });
+  } catch (fallbackErr) {
+    console.error('[OCR] Fallback pdf-parse também falhou:', fallbackErr);
+    return NextResponse.json({
+      success: false,
+      error: 'Não conseguimos ler este PDF. Tente enviar como imagem (tire um print da fatura).',
+    });
+  }
+}
+
+// ─── MAIN POST ───
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -175,10 +238,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado' }, { status: 400 });
     }
 
-    const fileSizeKB = (file.size / 1024).toFixed(0);
-    console.log(`[OCR] Arquivo: ${file.name}, type: ${file.type}, size: ${fileSizeKB}KB`);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    console.log(`[OCR] ========================================`);
+    console.log(`[OCR] Arquivo: ${file.name}, type: ${file.type}, size: ${fileSizeMB}MB`);
 
-    // Validar tipo
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
     const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
@@ -201,36 +264,46 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     let content: string;
 
-    // ─────────────────────────────────────
-    // ROTA 1: PDF → Gemini 2.0 Flash (aceita PDF nativo!)
-    // ─────────────────────────────────────
+    // ═══════════════════════════════════
+    // ROTA PDF: Gemini 2.0 Flash → Gemini 1.5 Flash → pdf-parse + OpenAI
+    // ═══════════════════════════════════
     if (isPDF) {
-      console.log('[OCR] Processando PDF com Gemini 2.0 Flash...');
+      console.log('[OCR] Processando PDF...');
+      const pdfBase64 = buffer.toString('base64');
+      const pdfSizeKB = Math.round(pdfBase64.length / 1024);
+      console.log(`[OCR] PDF base64: ${pdfSizeKB}KB`);
 
-      if (!GOOGLE_AI_API_KEY) {
-        console.error('[OCR] GOOGLE_AI_API_KEY não configurada, tentando fallback OpenAI...');
-        // Fallback: tentar extrair texto com pdf-parse + OpenAI
+      // Limite de 10MB para inlineData do Gemini
+      if (pdfBase64.length > 10 * 1024 * 1024) {
+        console.log('[OCR] PDF muito grande para Gemini, indo direto para fallback...');
         return await fallbackPDFWithOpenAI(buffer);
       }
 
+      // Tentativa 1: Gemini 2.0 Flash (3 retries internos)
       try {
-        const pdfBase64 = buffer.toString('base64');
-        console.log(`[OCR] PDF base64: ${(pdfBase64.length / 1024).toFixed(0)}KB`);
+        content = await callGeminiPDF(pdfBase64, 3);
+        console.log('[OCR] ✅ Gemini 2.0 Flash sucesso');
+      } catch (gemini2Err) {
+        console.error('[OCR] ❌ Gemini 2.0 Flash falhou:', gemini2Err instanceof Error ? gemini2Err.message : gemini2Err);
 
-        content = await callGeminiPDF(pdfBase64);
-        console.log('[OCR] Resposta Gemini:', content.substring(0, 600));
-      } catch (geminiErr) {
-        console.error('[OCR] Erro Gemini, tentando fallback OpenAI:', geminiErr);
-        // Fallback para OpenAI com pdf-parse
-        return await fallbackPDFWithOpenAI(buffer);
+        // Tentativa 2: Gemini 1.5 Flash
+        try {
+          content = await callGeminiPDFAsImage(pdfBase64);
+          console.log('[OCR] ✅ Gemini 1.5 Flash sucesso');
+        } catch (gemini15Err) {
+          console.error('[OCR] ❌ Gemini 1.5 Flash falhou:', gemini15Err instanceof Error ? gemini15Err.message : gemini15Err);
+
+          // Tentativa 3: pdf-parse + OpenAI
+          console.log('[OCR] Tentando fallback final: pdf-parse + OpenAI...');
+          return await fallbackPDFWithOpenAI(buffer);
+        }
       }
     }
-    // ─────────────────────────────────────
-    // ROTA 2: Imagem → GPT-4o Vision
-    // ─────────────────────────────────────
+    // ═══════════════════════════════════
+    // ROTA IMAGEM: GPT-4o Vision
+    // ═══════════════════════════════════
     else {
       if (!OPENAI_API_KEY) {
-        console.error('[OCR] OPENAI_API_KEY não configurada');
         return NextResponse.json({ error: 'OpenAI não configurada' }, { status: 500 });
       }
 
@@ -243,79 +316,39 @@ export async function POST(request: NextRequest) {
 
       const dataUrl = `data:${mimeType};base64,${base64}`;
       const imageDetail = base64.length > 5_000_000 ? 'low' : 'high';
-      console.log(`[OCR] Base64: ${(base64.length / 1024).toFixed(0)}KB, detail: ${imageDetail}`);
 
       const messages = [
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Extraia os dados desta fatura/boleto de plano de saúde. Identifique o pagador/sacado, CNPJ ou CPF, e a operadora de saúde:' },
+            { type: 'text', text: 'Extraia os dados desta fatura/boleto de plano de saúde:' },
             { type: 'image_url', image_url: { url: dataUrl, detail: imageDetail } },
           ],
         },
       ];
 
       content = await callGPTVision(messages);
-      console.log('[OCR] Resposta GPT-4o:', content.substring(0, 600));
+      console.log('[OCR] Resposta GPT-4o:', content.substring(0, 300));
     }
 
     // ─── Parsear resultado ───
     try {
       const dados = parseResponse(content);
-      console.log('[OCR] Dados extraídos:', JSON.stringify(dados));
+      console.log('[OCR] ✅ Dados extraídos:', JSON.stringify(dados).substring(0, 500));
       return NextResponse.json({ success: true, dados });
-    } catch {
-      console.error('[OCR] Falha ao parsear resposta:', content);
+    } catch (parseErr) {
+      console.error('[OCR] ❌ Falha ao parsear:', content?.substring(0, 500));
+      console.error('[OCR] Parse error:', parseErr);
       return NextResponse.json({
         success: false,
         error: 'Não foi possível extrair os dados. Tente uma foto mais nítida ou outro arquivo.',
-        raw: content,
+        raw: content?.substring(0, 200),
       });
     }
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : 'Erro interno no servidor';
-    console.error('[OCR] Erro:', errorMsg);
+    const errorMsg = err instanceof Error ? err.message : 'Erro interno';
+    console.error('[OCR] ❌ Erro geral:', errorMsg);
     return NextResponse.json({ success: false, error: errorMsg });
-  }
-}
-
-// ─── Fallback: PDF → pdf-parse + OpenAI text ───
-async function fallbackPDFWithOpenAI(buffer: Buffer) {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require('pdf-parse');
-    const pdfData = await pdfParse(buffer);
-    const pdfText = pdfData.text?.trim() || '';
-    console.log(`[OCR] Fallback pdf-parse: ${pdfText.length} chars`);
-
-    if (pdfText.length < 20) {
-      return NextResponse.json({
-        success: false,
-        error: 'Este PDF parece ser uma imagem escaneada. Tire um print/screenshot e envie como imagem.',
-      });
-    }
-
-    const textTruncated = pdfText.substring(0, 4000);
-
-    const messages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: `Extraia os dados desta fatura de plano de saúde. Identifique o pagador/sacado, CNPJ ou CPF, e a operadora. Texto extraído do PDF:\n\n---\n${textTruncated}\n---`,
-      },
-    ];
-
-    const content = await callGPTVision(messages);
-    console.log('[OCR] Fallback resposta GPT:', content.substring(0, 500));
-
-    const dados = parseResponse(content);
-    return NextResponse.json({ success: true, dados });
-  } catch (fallbackErr) {
-    console.error('[OCR] Fallback também falhou:', fallbackErr);
-    return NextResponse.json({
-      success: false,
-      error: 'Não foi possível ler este PDF. Tente enviar um print/screenshot da fatura.',
-    });
   }
 }
