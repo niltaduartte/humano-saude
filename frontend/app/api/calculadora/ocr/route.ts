@@ -15,7 +15,7 @@ function getVertexAI() {
   }
 
   const credentials = JSON.parse(saJSON);
-  const projectId = credentials.project_id;
+  const projectId = credentials.project_id; // gen-lang-client-0591725975 (Vertex AI ativo)
   const clientEmail = credentials.client_email;
 
   console.log(`[AUDITORIA IA] Modelo: ${VERTEX_MODEL} | Projeto: ${projectId} | SA: ${clientEmail} | Location: ${VERTEX_LOCATION}`);
