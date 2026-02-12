@@ -37,13 +37,13 @@ import type { LeadIndicacao } from '@/app/actions/leads-indicacao';
 // STATUS CONFIG
 // =============================================
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  simulou: { label: 'Simulou', color: 'text-blue-400', bg: 'bg-blue-400/10' },
-  entrou_em_contato: { label: 'Contatou', color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-  em_analise: { label: 'Em Análise', color: 'text-purple-400', bg: 'bg-purple-400/10' },
-  proposta_enviada: { label: 'Proposta', color: 'text-orange-400', bg: 'bg-orange-400/10' },
-  fechado: { label: 'Fechado', color: 'text-green-400', bg: 'bg-green-400/10' },
-  perdido: { label: 'Perdido', color: 'text-red-400', bg: 'bg-red-400/10' },
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; desc: string }> = {
+  simulou: { label: 'Simulou', color: 'text-blue-400', bg: 'bg-blue-400/10', desc: 'O lead fez a simulação' },
+  entrou_em_contato: { label: 'Em contato', color: 'text-yellow-400', bg: 'bg-yellow-400/10', desc: 'Humano Saúde entrou em contato' },
+  em_analise: { label: 'Em análise', color: 'text-purple-400', bg: 'bg-purple-400/10', desc: 'Proposta sendo analisada' },
+  proposta_enviada: { label: 'Proposta enviada', color: 'text-orange-400', bg: 'bg-orange-400/10', desc: 'Proposta enviada ao cliente' },
+  fechado: { label: '✅ Venda fechada', color: 'text-green-400', bg: 'bg-green-400/10', desc: 'Venda concluída com sucesso!' },
+  perdido: { label: 'Não fechou', color: 'text-red-400', bg: 'bg-red-400/10', desc: 'Cliente não fechou' },
 };
 
 // =============================================
@@ -408,7 +408,7 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                   <thead>
                     <tr className="border-b border-white/[0.06]">
                       <th className="text-left px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Lead</th>
-                      <th className="text-center px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Status</th>
+                      <th className="text-center px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Status Cliente</th>
                       <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Valor Fatura</th>
                       <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Plano Novo Est.</th>
                       <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden lg:table-cell">Economia</th>
@@ -439,23 +439,27 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                             </div>
                           </td>
 
-                          {/* STATUS (read-only badge) */}
+                          {/* STATUS CLIENTE (read-only, atualizado pelo admin) */}
                           <td className="px-4 py-3 text-center">
-                            <span
-                              className={cn(
-                                'inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg',
-                                statusCfg.bg,
-                                statusCfg.color,
-                              )}
-                            >
-                              {lead.status === 'fechado' && <CheckCircle className="h-3 w-3" />}
-                              {lead.status === 'perdido' && <XCircle className="h-3 w-3" />}
-                              {lead.status === 'em_analise' && <Target className="h-3 w-3" />}
-                              {lead.status === 'entrou_em_contato' && <MessageCircle className="h-3 w-3" />}
-                              {lead.status === 'simulou' && <Eye className="h-3 w-3" />}
-                              {lead.status === 'proposta_enviada' && <TrendingUp className="h-3 w-3" />}
-                              {statusCfg.label}
-                            </span>
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span
+                                title={statusCfg.desc}
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg',
+                                  statusCfg.bg,
+                                  statusCfg.color,
+                                )}
+                              >
+                                {lead.status === 'fechado' && <CheckCircle className="h-3 w-3" />}
+                                {lead.status === 'perdido' && <XCircle className="h-3 w-3" />}
+                                {lead.status === 'em_analise' && <Target className="h-3 w-3" />}
+                                {lead.status === 'entrou_em_contato' && <MessageCircle className="h-3 w-3" />}
+                                {lead.status === 'simulou' && <Eye className="h-3 w-3" />}
+                                {lead.status === 'proposta_enviada' && <TrendingUp className="h-3 w-3" />}
+                                {statusCfg.label}
+                              </span>
+                              <span className="text-[9px] text-white/20">{statusCfg.desc}</span>
+                            </div>
                           </td>
 
                           {/* VALOR DA FATURA (valor atual do cliente) */}

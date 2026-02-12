@@ -1,6 +1,5 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
 import { createServiceClient } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
@@ -37,6 +36,8 @@ export async function saveScannedLead(
   leadData: ScannedLeadData
 ): Promise<SaveLeadResponse> {
   try {
+    const sb = createServiceClient();
+
     // Validação básica
     if (!leadData.nome || !leadData.whatsapp) {
       return {
@@ -47,7 +48,7 @@ export async function saveScannedLead(
     }
 
     // Verifica se já existe um lead com esse WhatsApp
-    const { data: existingLead } = await supabase
+    const { data: existingLead } = await sb
       .from('insurance_leads')
       .select('id, nome')
       .eq('whatsapp', leadData.whatsapp)
@@ -90,7 +91,7 @@ export async function saveScannedLead(
     };
 
     // Insere o lead no Supabase
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('insurance_leads')
       .insert(leadToInsert)
       .select('id')
@@ -139,7 +140,8 @@ export async function getLeads(filters?: {
   offset?: number;
 }) {
   try {
-    let query = supabase
+    const sb = createServiceClient();
+    let query = sb
       .from('insurance_leads')
       .select('*')
       .eq('arquivado', false)
@@ -306,7 +308,8 @@ export async function updateLeadStatus(
  */
 export async function getDashboardStats() {
   try {
-    const { data, error } = await supabase
+    const sb = createServiceClient();
+    const { data, error } = await sb
       .from('dashboard_stats')
       .select('*')
       .single();

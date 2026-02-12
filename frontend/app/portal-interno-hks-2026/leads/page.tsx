@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Users, Phone, Mail, ArrowUpRight, CheckCircle, XCircle, Pause, MessageSquare } from 'lucide-react';
+import { Users, Phone, Mail, ArrowUpRight, CheckCircle, XCircle, Pause, MessageSquare, Calculator, ScanLine, PenLine, Globe, UserCheck } from 'lucide-react';
 import { getLeads, updateLeadStatus } from '@/app/actions/leads';
 import type { LeadStatus } from '@/lib/types/database';
 import { LEAD_STATUS } from '@/lib/types/database';
@@ -33,6 +33,24 @@ const statusConfig: Record<LeadStatus, { label: string; color: string; icon: Rea
   perdido: { label: 'Perdido', color: 'bg-red-500/20 text-red-400', icon: XCircle },
   pausado: { label: 'Pausado', color: 'bg-gray-500/20 text-gray-400', icon: Pause },
 };
+
+// ============================================
+// CONFIGURAÇÃO DE ORIGEM
+// ============================================
+
+const ORIGEM_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<any> }> = {
+  calculadora_economia: { label: 'Calculadora', color: 'bg-emerald-500/20 text-emerald-400', icon: Calculator },
+  scanner: { label: 'Scanner PDF', color: 'bg-cyan-500/20 text-cyan-400', icon: ScanLine },
+  manual: { label: 'Manual', color: 'bg-amber-500/20 text-amber-400', icon: PenLine },
+  site: { label: 'Site', color: 'bg-indigo-500/20 text-indigo-400', icon: Globe },
+};
+
+const ORIGEM_FALLBACK = { label: 'Direto', color: 'bg-gray-500/20 text-gray-400', icon: Globe };
+
+/** Extrai o slug do corretor de dados_pdf */
+function getCorretorSlug(lead: any): string | null {
+  return lead?.dados_pdf?.corretor?.slug || null;
+}
 
 // ============================================
 // COLUNAS DA TABELA
@@ -87,6 +105,27 @@ function makeColumns(onStatusChange: (id: string, status: string) => void): Colu
       ),
     },
     {
+      key: 'origem',
+      header: 'Origem',
+      hidden: 'md',
+      render: (lead) => {
+        const origemKey = lead.origem || 'direto';
+        const cfg = ORIGEM_CONFIG[origemKey] || ORIGEM_FALLBACK;
+        const corretor = getCorretorSlug(lead);
+        return (
+          <div className="flex flex-col gap-1">
+            <StatusBadge label={cfg.label} color={cfg.color} icon={cfg.icon} />
+            {corretor && (
+              <span className="flex items-center gap-1 text-[10px] text-[#D4AF37]">
+                <UserCheck className="h-3 w-3" />
+                {corretor}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: 'status',
       header: 'Status',
       render: (lead) => {
@@ -139,6 +178,8 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterOrigem, setFilterOrigem] = useState('');
+  const [filterCorretor, setFilterCorretor] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -167,19 +208,63 @@ export default function LeadsPage() {
 
   const columns = useMemo(() => makeColumns(handleStatusChange), []);
 
-  const filtered = search
-    ? leads.filter(
+  const filtered = useMemo(() => {
+    let result = leads;
+
+    // Filtro de busca por texto
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
         (l) =>
-          l.nome?.toLowerCase().includes(search.toLowerCase()) ||
+          l.nome?.toLowerCase().includes(q) ||
           l.whatsapp?.includes(search) ||
-          l.email?.toLowerCase().includes(search.toLowerCase())
-      )
-    : leads;
+          l.email?.toLowerCase().includes(q)
+      );
+    }
+
+    // Filtro por origem
+    if (filterOrigem) {
+      if (filterOrigem === 'indicacao') {
+        // Filtra leads que vieram de corretor (indicação)
+        result = result.filter((l) => !!getCorretorSlug(l));
+      } else {
+        result = result.filter((l) => (l.origem || 'direto') === filterOrigem);
+      }
+    }
+
+    // Filtro por corretor
+    if (filterCorretor) {
+      result = result.filter((l) => getCorretorSlug(l) === filterCorretor);
+    }
+
+    return result;
+  }, [leads, search, filterOrigem, filterCorretor]);
+
+  // Lista única de corretores para o filtro
+  const corretorOptions = useMemo(() => {
+    const slugs = new Set<string>();
+    leads.forEach((l) => {
+      const slug = getCorretorSlug(l);
+      if (slug) slugs.add(slug);
+    });
+    return Array.from(slugs).sort().map((s) => ({ value: s, label: s }));
+  }, [leads]);
+
+  // Contagem de indicações
+  const indicacoesCount = useMemo(() => leads.filter((l) => !!getCorretorSlug(l)).length, [leads]);
 
   const statusOptions = LEAD_STATUS.map((s) => ({
     value: s,
     label: statusConfig[s].label,
   }));
+
+  const origemOptions = [
+    { value: 'indicacao', label: '👤 Indicações (Corretor)' },
+    { value: 'calculadora_economia', label: '🧮 Calculadora' },
+    { value: 'scanner', label: '📄 Scanner PDF' },
+    { value: 'manual', label: '✏️ Manual' },
+    { value: 'site', label: '🌐 Site' },
+  ];
 
   if (loading && leads.length === 0) return <PageLoading text="Carregando leads..." />;
 
@@ -193,7 +278,7 @@ export default function LeadsPage() {
       />
 
       {/* Stats por status */}
-      <StatsGrid cols={4}>
+      <StatsGrid cols={5}>
         {(['novo', 'contatado', 'negociacao', 'proposta_enviada'] as LeadStatus[]).map((status) => {
           const cfg = statusConfig[status];
           const count = leads.filter((l) => l.status === status).length;
@@ -207,6 +292,13 @@ export default function LeadsPage() {
             />
           );
         })}
+        <StatsCard
+          key="indicacoes"
+          label="Indicações"
+          value={indicacoesCount}
+          onClick={() => setFilterOrigem(filterOrigem === 'indicacao' ? '' : 'indicacao')}
+          active={filterOrigem === 'indicacao'}
+        />
       </StatsGrid>
 
       {/* Busca + Filtros */}
@@ -222,6 +314,20 @@ export default function LeadsPage() {
           options={statusOptions}
           placeholder="Todos os status"
         />
+        <FilterSelect
+          value={filterOrigem}
+          onChange={setFilterOrigem}
+          options={origemOptions}
+          placeholder="Todas as origens"
+        />
+        {corretorOptions.length > 0 && (
+          <FilterSelect
+            value={filterCorretor}
+            onChange={setFilterCorretor}
+            options={corretorOptions}
+            placeholder="Todos os corretores"
+          />
+        )}
       </div>
 
       {/* Tabela */}
