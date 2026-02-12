@@ -373,15 +373,34 @@ export default function CalculadoraEconomia({
     });
   }, []);
 
-  // ─── CONVERSOR PDF → IMAGEM (preview) ────────
+  // ─── CONVERSOR PDF → IMAGEM (preview via CDN) ────────
   const pdfToPreviewImage = useCallback(async (file: File): Promise<string | null> => {
     try {
-      const pdfjsLib = await import('pdfjs-dist');
+      // Carregar pdf.js via CDN (não precisa de dependência instalada)
+      const PDFJS_VERSION = '4.8.69';
+      const cdnBase = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
 
-      // Configurar worker
-      if (typeof window !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfjsLib = (window as any).pdfjsLib || await new Promise<any>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `${cdnBase}/pdf.min.mjs`;
+        script.type = 'module';
+        // Fallback: usar versão não-module
+        const scriptFallback = document.createElement('script');
+        scriptFallback.src = `${cdnBase}/pdf.min.js`;
+        scriptFallback.onload = () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const lib = (window as any).pdfjsLib;
+          if (lib) {
+            lib.GlobalWorkerOptions.workerSrc = `${cdnBase}/pdf.worker.min.js`;
+            resolve(lib);
+          } else {
+            reject(new Error('pdf.js não carregou'));
+          }
+        };
+        scriptFallback.onerror = reject;
+        document.head.appendChild(scriptFallback);
+      });
 
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
