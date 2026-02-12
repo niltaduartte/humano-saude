@@ -9,6 +9,7 @@ import {
   Sparkles, Plus, Trash2, Wand2, Info, Clock, Heart,
   TrendingUp, AlertCircle, Target, Flame, Search, Building2,
   Stethoscope, Shield, MapPin, RefreshCw, Eye, Upload,
+  Send, Undo2, MessageSquare,
 } from 'lucide-react';
 import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
@@ -449,6 +450,9 @@ export default function BannerGenerator({ corretorId }: { corretorId: string }) 
   const [aiEnhanceLoading, setAiEnhanceLoading] = useState(false);
   const [aiImageUrl, setAiImageUrl] = useState('');
   const [previewFullUrl, setPreviewFullUrl] = useState('');
+  const [aiRefinePrompt, setAiRefinePrompt] = useState('');
+  const [aiRefineLoading, setAiRefineLoading] = useState(false);
+  const [aiHistory, setAiHistory] = useState<string[]>([]); /* histórico de imagens IA geradas */
   const [status, setStatus] = useState<Status>('editing');
   const [resultUrl, setResultUrl] = useState('');
   const [loadingPrecos, setLoadingPrecos] = useState(false);
@@ -621,6 +625,8 @@ export default function BannerGenerator({ corretorId }: { corretorId: string }) 
     if (!canvas) { toast.error('Erro ao capturar preview'); return; }
     setAiEnhanceLoading(true);
     setAiImageUrl('');
+    setAiHistory([]);
+    setAiRefinePrompt('');
     try {
       const imageBase64 = canvas.toDataURL('image/png');
       const res = await fetch('/api/corretor/banners/ai-image', {
@@ -631,12 +637,56 @@ export default function BannerGenerator({ corretorId }: { corretorId: string }) 
       const data = await res.json();
       if (data.success && data.imageUrl) {
         setAiImageUrl(data.imageUrl);
+        setAiHistory([data.imageUrl]);
         toast.success('🎨 Imagem gerada com IA!');
       } else {
         toast.error(data.error || 'Erro ao gerar imagem com IA');
       }
     } catch { toast.error('Erro de conexão com IA'); }
     finally { setAiEnhanceLoading(false); }
+  };
+
+  const refineAiImage = async () => {
+    if (!aiRefinePrompt.trim() || !aiImageUrl) return;
+    const canvas = await captureCanvas();
+    if (!canvas) { toast.error('Erro ao capturar preview'); return; }
+    setAiRefineLoading(true);
+    try {
+      const imageBase64 = canvas.toDataURL('image/png');
+      const res = await fetch('/api/corretor/banners/ai-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64,
+          operadora: op.nome,
+          plano: nomePlano,
+          modalidade,
+          angulo: angulo.id,
+          template,
+          ratio,
+          refinementPrompt: aiRefinePrompt.trim(),
+          previousImageBase64: aiImageUrl,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.imageUrl) {
+        setAiImageUrl(data.imageUrl);
+        setAiHistory(prev => [...prev, data.imageUrl]);
+        setAiRefinePrompt('');
+        toast.success('✨ Ajuste aplicado com sucesso!');
+      } else {
+        toast.error(data.error || 'Erro ao refinar imagem');
+      }
+    } catch { toast.error('Erro de conexão com IA'); }
+    finally { setAiRefineLoading(false); }
+  };
+
+  const undoAiImage = () => {
+    if (aiHistory.length <= 1) return;
+    const newHistory = aiHistory.slice(0, -1);
+    setAiHistory(newHistory);
+    setAiImageUrl(newHistory[newHistory.length - 1]);
+    toast.success('↩️ Versão anterior restaurada');
   };
 
   const isStories = ratio === '9:16';
@@ -1388,13 +1438,63 @@ export default function BannerGenerator({ corretorId }: { corretorId: string }) 
         {/* AI Generated Image Result */}
         {aiImageUrl && (
           <div className="bg-[#111] border border-purple-500/30 rounded-xl p-4 space-y-3">
-            <h4 className="text-white font-semibold text-sm flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400" /> Versão Gerada por IA
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-white font-semibold text-sm flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-400" /> Versão Gerada por IA
+              </h4>
+              {aiHistory.length > 1 && (
+                <span className="text-purple-400/60 text-[10px] font-medium">
+                  Versão {aiHistory.length} de {aiHistory.length}
+                </span>
+              )}
+            </div>
             <div className="relative mx-auto rounded-xl overflow-hidden border-2 border-purple-500/30 cursor-pointer group hover:border-purple-400/60 transition-colors" style={{ width: previewW, maxHeight: previewH + 100 }} onClick={() => setPreviewFullUrl(aiImageUrl)} title="Clique para ver em tamanho real">
               <div className="absolute top-2 right-2 z-10 bg-black/60 text-white/70 text-[10px] px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">🔍 Ver tamanho real</div>
+              {aiRefineLoading && (
+                <div className="absolute inset-0 z-20 bg-black/70 flex flex-col items-center justify-center gap-3 rounded-xl">
+                  <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                  <span className="text-purple-300 text-xs font-medium">Aplicando ajuste...</span>
+                </div>
+              )}
               <img src={aiImageUrl} alt="Banner gerado por IA" className="w-full h-auto rounded-xl" />
             </div>
+
+            {/* ═══ Prompt de Refinamento ═══ */}
+            <div className="bg-[#0a0a0a] border border-purple-500/20 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                <span className="text-purple-300 text-[11px] font-semibold uppercase tracking-wider">Pedir Ajuste à IA</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={aiRefinePrompt}
+                  onChange={(e) => setAiRefinePrompt(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); refineAiImage(); } }}
+                  placeholder="Ex: Aumente o preço, mude a cor para azul, adicione mais contraste..."
+                  disabled={aiRefineLoading}
+                  className="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2.5 text-xs text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 outline-none disabled:opacity-50 transition"
+                />
+                <button
+                  onClick={refineAiImage}
+                  disabled={!aiRefinePrompt.trim() || aiRefineLoading}
+                  className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium text-xs hover:opacity-90 transition disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+                  title="Enviar ajuste"
+                >
+                  {aiRefineLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  Ajustar
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {['Aumente o texto do preço', 'Mude cores para mais vibrantes', 'Adicione mais contraste', 'Torne mais minimalista', 'Destaque o nome do plano'].map((sug) => (
+                  <button key={sug} onClick={() => setAiRefinePrompt(sug)}
+                    className="px-2 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-md text-[10px] hover:bg-purple-500/20 hover:border-purple-500/40 transition">
+                    {sug}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ═══ Botões de Ação ═══ */}
             <div className="flex gap-2">
               <button onClick={() => {
                 const a = document.createElement('a');
@@ -1405,7 +1505,14 @@ export default function BannerGenerator({ corretorId }: { corretorId: string }) 
               }} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium text-xs hover:opacity-90 transition">
                 <Download className="w-3 h-3" /> Baixar Versão IA
               </button>
-              <button onClick={() => setAiImageUrl('')}
+              {aiHistory.length > 1 && (
+                <button onClick={undoAiImage}
+                  className="px-3 py-2 border border-purple-500/30 text-purple-400 rounded-lg text-xs hover:border-purple-400 hover:text-purple-300 transition flex items-center gap-1.5"
+                  title="Voltar para versão anterior">
+                  <Undo2 className="w-3 h-3" /> Desfazer
+                </button>
+              )}
+              <button onClick={() => { setAiImageUrl(''); setAiHistory([]); setAiRefinePrompt(''); }}
                 className="px-3 py-2 border border-gray-700 text-gray-400 rounded-lg text-xs hover:border-gray-500 transition">
                 Fechar
               </button>
