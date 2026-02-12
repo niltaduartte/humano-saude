@@ -439,23 +439,21 @@ export default function CalculadoraEconomia({
       }
     }
 
-    // Animação de progresso
+        // Animação de progresso
     const progressSteps = isPDF
       ? [
           { pct: 15, label: '📄 PDF recebido!' },
-          { pct: 30, label: '📖 Extraindo texto do PDF...' },
-          { pct: 50, label: '🤖 IA analisando dados...' },
-          { pct: 70, label: '📊 Extraindo operadora e valores...' },
-          { pct: 85, label: '�� Identificando beneficiários...' },
-          { pct: 95, label: '✅ Quase pronto...' },
+          { pct: 35, label: '📖 Lendo o documento...' },
+          { pct: 55, label: '📊 Extraindo operadora e valores...' },
+          { pct: 75, label: '🧑‍💼 Identificando beneficiários...' },
+          { pct: 90, label: '✅ Quase pronto...' },
         ]
       : [
-          { pct: 15, label: '📷 Imagem otimizada!' },
-          { pct: 30, label: '🤖 Enviando para IA...' },
-          { pct: 50, label: '🔍 IA lendo a fatura...' },
-          { pct: 70, label: '📊 Extraindo operadora e valores...' },
-          { pct: 85, label: '🧠 Identificando beneficiários...' },
-          { pct: 95, label: '✅ Quase pronto...' },
+          { pct: 15, label: '📷 Imagem recebida!' },
+          { pct: 35, label: '🔍 Lendo a fatura...' },
+          { pct: 55, label: '📊 Extraindo operadora e valores...' },
+          { pct: 75, label: '🧑‍💼 Identificando beneficiários...' },
+          { pct: 90, label: '✅ Quase pronto...' },
         ];
 
     let stepIndex = 0;
@@ -467,37 +465,29 @@ export default function CalculadoraEconomia({
       }
     }, 1200);
 
-    // Função interna para chamar a API OCR
-    const chamarOCR = async (): Promise<{ success: boolean; dados?: DadosFatura; error?: string }> => {
-      const fd = new FormData();
-      fd.append('fatura', file);
-      const res = await fetch('/api/calculadora/ocr', { method: 'POST', body: fd });
+    try {
+      const formData = new FormData();
+      formData.append('fatura', file);
+
+      console.log(`[Upload] Enviando: ${file.name}, size: ${(file.size / 1024).toFixed(0)}KB, type: ${file.type}`);
+
+      const res = await fetch('/api/calculadora/ocr', {
+        method: 'POST',
+        body: formData,
+      });
+
+      clearInterval(progressInterval);
+
+      let data: { success: boolean; dados?: DadosFatura; error?: string };
       if (!res.ok) {
         let errorMsg = 'Erro ao processar a fatura.';
         try { const errData = await res.json(); errorMsg = errData.error || errorMsg; } catch { /* */ }
-        return { success: false, error: errorMsg };
-      }
-      return await res.json();
-    };
-
-    try {
-      console.log(`[Upload] Enviando: ${file.name}, size: ${(file.size / 1024).toFixed(0)}KB, type: ${file.type}, isPDF: ${isPDF}`);
-
-      // Tentativa 1
-      let data = await chamarOCR();
-      console.log('[Upload] Tentativa 1:', data.success ? '✅' : '❌', JSON.stringify(data).substring(0, 300));
-
-      // Auto-retry: se falhou, tenta uma segunda vez automaticamente
-      if (!data.success) {
-        console.log('[Upload] Auto-retry: tentando segunda vez...');
-        setOcrEtapa('🔄 Tentando novamente com outro método...');
-        setOcrProgresso(50);
-        await new Promise(r => setTimeout(r, 1500));
-        data = await chamarOCR();
-        console.log('[Upload] Tentativa 2:', data.success ? '✅' : '❌', JSON.stringify(data).substring(0, 300));
+        data = { success: false, error: errorMsg };
+      } else {
+        data = await res.json();
       }
 
-      clearInterval(progressInterval);
+      console.log('[Upload] Response:', data.success ? '✅' : '❌', JSON.stringify(data).substring(0, 300));
       setOcrProgresso(100);
 
       if (data.success && data.dados) {
@@ -865,7 +855,7 @@ export default function CalculadoraEconomia({
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-xs font-medium mb-4">
             <Sparkles className="h-3.5 w-3.5" />
-            Análise com IA em segundos
+            Análise automática em segundos
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
             Descubra quanto você pode{' '}
@@ -913,7 +903,7 @@ export default function CalculadoraEconomia({
                 </motion.div>
               </div>
 
-              {/* Card 2 — IA Processando */}
+              {/* Card 2 — Processando */}
               <motion.div
                 animate={{ rotateY: [0, -6, 0, 6, 0], scale: [1, 1.03, 1] }}
                 transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
@@ -928,7 +918,7 @@ export default function CalculadoraEconomia({
                 >
                   <Sparkles className="h-8 w-8 sm:h-9 sm:w-9 text-[#D4AF37]" />
                 </motion.div>
-                <span className="text-[9px] sm:text-[10px] text-[#D4AF37] font-bold relative z-10">IA Analisando</span>
+                <span className="text-[9px] sm:text-[10px] text-[#D4AF37] font-bold relative z-10">Analisando</span>
                 {/* Partículas */}
                 <motion.div
                   animate={{ opacity: [0.2, 0.6, 0.2], y: [-2, 2, -2] }}
@@ -1118,8 +1108,8 @@ export default function CalculadoraEconomia({
                         />
                       </div>
                       <div className="flex justify-between mt-1.5">
-                        <span className="text-[10px] text-white/20">Leitura com IA</span>
-                        <span className="text-[10px] text-white/20">GPT-4 Vision</span>
+                        <span className="text-[10px] text-white/20">Leitura Inteligente</span>
+                        <span className="text-[10px] text-white/20">Leitura Inteligente</span>
                       </div>
                     </div>
                   </div>
@@ -1289,7 +1279,7 @@ export default function CalculadoraEconomia({
                     {/* Header */}
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10 border-b border-green-500/10">
                       <Sparkles className="h-4 w-4 text-green-400" />
-                      <p className="text-green-400 font-medium text-sm">Dados extraídos automaticamente pela IA</p>
+                      <p className="text-green-400 font-medium text-sm">Dados extraídos automaticamente</p>
                     </div>
                     <div className="p-4 space-y-2.5">
                       {/* Operadora detectada */}
@@ -1380,7 +1370,7 @@ export default function CalculadoraEconomia({
                   {dadosFatura.tipo_pessoa && (
                     <p className="text-[11px] text-[#D4AF37]/60 mt-1.5 flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
-                      Detectado automaticamente pela IA
+                      Detectado automaticamente
                     </p>
                   )}
                 </div>
@@ -1394,7 +1384,7 @@ export default function CalculadoraEconomia({
                     {dadosFatura.valor_total && valorManual && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[10px] text-[#D4AF37] font-medium">
                         <Sparkles className="h-3 w-3" />
-                        Detectado pela IA
+                        Detectado automaticamente
                       </span>
                     )}
                   </div>
@@ -1419,7 +1409,7 @@ export default function CalculadoraEconomia({
                     {dadosFatura.operadora && operadoraManual && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[10px] text-[#D4AF37] font-medium">
                         <Sparkles className="h-3 w-3" />
-                        Identificada pela IA
+                        Identificada automaticamente
                       </span>
                     )}
                   </div>
@@ -1456,7 +1446,7 @@ export default function CalculadoraEconomia({
                     {dadosFatura.faixas_etarias && dadosFatura.faixas_etarias.length > 0 && idades.length > 0 && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[10px] text-[#D4AF37] font-medium">
                         <Sparkles className="h-3 w-3" />
-                        Detectadas pela IA
+                        Detectadas automaticamente
                       </span>
                     )}
                   </div>
