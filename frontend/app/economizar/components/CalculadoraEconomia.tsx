@@ -1861,7 +1861,10 @@ export default function CalculadoraEconomia({
                   Envie agora os documentos necessários para adesão e nossa equipe já inicia o processo de migração.
                 </p>
                 <button
-                  onClick={() => setEtapa('documentos')}
+                  onClick={() => {
+                    setEtapa('documentos');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#D4AF37] text-black font-bold text-sm hover:bg-[#F6E05E] transition-all"
                 >
                   <Upload className="h-4 w-4" />
@@ -1949,6 +1952,7 @@ export default function CalculadoraEconomia({
                   onClick={() => {
                     setEtapa('dados');
                     setResultado(null);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="text-sm text-white/30 hover:text-[#D4AF37] transition-colors"
                 >
@@ -2085,7 +2089,10 @@ export default function CalculadoraEconomia({
                       Enviar documentos ({documentosFiltrados.filter((d) => d.arquivo).length} anexado{documentosFiltrados.filter((d) => d.arquivo).length !== 1 ? 's' : ''})
                     </button>
                     <button
-                      onClick={() => setEtapa('resultado')}
+                      onClick={() => {
+                        setEtapa('resultado');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       className="w-full py-3 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white/50 text-sm hover:border-[#D4AF37]/30 hover:text-[#D4AF37] transition-all"
                     >
                       ← Voltar ao resultado
