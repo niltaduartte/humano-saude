@@ -39,6 +39,7 @@ import {
   salvarLeadIndicacao,
   marcarClicouContato,
 } from '@/app/actions/leads-indicacao';
+import { saveCalculadoraLead } from '@/app/actions/leads';
 import type { CorretorPublico } from '@/app/actions/leads-indicacao';
 
 // =============================================
@@ -222,6 +223,8 @@ export default function CalculadoraEconomia({
 
   // Preview da imagem da fatura
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Arquivo da fatura para enviar ao admin
+  const [faturaFile, setFaturaFile] = useState<File | null>(null);
 
   // Câmera
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -487,6 +490,8 @@ export default function CalculadoraEconomia({
     try {
       const formData = new FormData();
       formData.append('fatura', file);
+      // Guardar arquivo para enviar ao admin depois
+      setFaturaFile(file);
 
       console.log(`[Upload] Enviando: ${file.name}, size: ${(file.size / 1024).toFixed(0)}KB, type: ${file.type}`);
 
@@ -757,6 +762,78 @@ export default function CalculadoraEconomia({
       if (leadResult.success && leadResult.lead_id) {
         setLeadId(leadResult.lead_id);
       }
+
+      // ═══ SALVAR TAMBÉM NO INSURANCE_LEADS (Painel Admin) com TODOS os dados ═══
+      try {
+        // Upload da fatura original para Storage (admin precisa ver)
+        let faturaUrl: string | null = null;
+        if (faturaFile) {
+          try {
+            const faturaFormData = new FormData();
+            faturaFormData.append('fatura', faturaFile);
+            faturaFormData.append('telefone', telefone.replace(/\D/g, ''));
+            const uploadRes = await fetch('/api/calculadora/fatura-upload', {
+              method: 'POST',
+              body: faturaFormData,
+            });
+            const uploadData = await uploadRes.json();
+            if (uploadData.success) faturaUrl = uploadData.url;
+          } catch (e) {
+            console.warn('[Calculadora] Falha upload fatura:', e);
+          }
+        }
+
+        const resultadoCompleto = resultado || (simData.success ? {
+          valorAtual: valor,
+          propostas: simData.propostas,
+          qtdVidas: simData.qtd_vidas,
+          modalidade: simData.modalidade,
+        } : null);
+
+        const adminResult = await saveCalculadoraLead({
+          nome: nomeResponsavel || nome || 'Lead Calculadora',
+          telefone,
+          email: email || undefined,
+          operadora_atual: operadoraManual || dadosFatura.operadora || undefined,
+          valor_atual: valor,
+          idades,
+          economia_estimada: bestEconomia,
+          valor_proposto: simData.propostas?.[0]?.valor_total || undefined,
+          tipo_pessoa: tipoPessoa,
+          plano_atual: dadosFatura.plano || undefined,
+          corretor_slug: corretor?.slug || undefined,
+          corretor_id: corretor?.id || undefined,
+          // ═══ TUDO para o admin ═══
+          dados_ocr: {
+            ...dadosFatura,
+            fatura_url: faturaUrl,
+            preview_url: previewUrl,
+          },
+          resultado_simulacao: resultadoCompleto ? {
+            valorAtual: resultadoCompleto.valorAtual,
+            qtdVidas: resultadoCompleto.qtdVidas,
+            modalidade: resultadoCompleto.modalidade,
+          } : undefined,
+          propostas: resultadoCompleto?.propostas?.map((p: PropostaResultado) => ({
+            operadora_id: p.operadora_id,
+            operadora_nome: p.operadora_nome,
+            plano_nome: p.plano_nome,
+            valor_total: p.valor_total,
+            economia_valor: p.economia_valor,
+            economia_pct: p.economia_pct,
+            coparticipacao: p.coparticipacao,
+            abrangencia: p.abrangencia,
+            rede_hospitalar: p.rede_hospitalar,
+            notas: p.notas,
+          })) || undefined,
+        });
+        // Usar o ID do insurance_leads para vincular documentos
+        if (adminResult.success && adminResult.lead_id) {
+          setLeadId(adminResult.lead_id);
+        }
+      } catch (e) {
+        console.warn('[Calculadora] Falha ao salvar no insurance_leads (admin):', e);
+      }
     } catch {
       toast.error('Erro ao calcular. Tente novamente.');
     }
@@ -805,8 +882,34 @@ export default function CalculadoraEconomia({
       return;
     }
 
-    toast.success(`${docsAnexados.length} documento(s) enviado(s) com sucesso! Nossa equipe entrará em contato.`);
-    setEnviadoDocumentos(true);
+    try {
+      const formData = new FormData();
+      formData.append('lead_id', leadId || '');
+      formData.append('telefone', telefone || '');
+      formData.append('nome', nomeResponsavel || nome || '');
+
+      for (const doc of docsAnexados) {
+        if (doc.arquivo) {
+          formData.append(`doc_${doc.id}`, doc.arquivo);
+        }
+      }
+
+      const res = await fetch('/api/calculadora/documentos', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success(`${data.quantidade} documento(s) enviado(s) com sucesso! Nossa equipe entrará em contato.`);
+        setEnviadoDocumentos(true);
+      } else {
+        toast.error(data.error || 'Erro ao enviar documentos. Tente novamente.');
+      }
+    } catch {
+      toast.error('Erro ao enviar documentos. Tente novamente.');
+    }
   };
 
   // ─── CONTATO WHATSAPP ────────────────────────

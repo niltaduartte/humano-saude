@@ -12,8 +12,6 @@ import {
   Search,
   Filter,
   Loader2,
-  Phone,
-  Mail,
   Target,
   Eye,
   ArrowUpRight,
@@ -23,12 +21,12 @@ import {
   CheckCheck,
   Shield,
   Zap,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   getIndicacoesCorretor,
-  atualizarStatusLead,
 } from '@/app/actions/leads-indicacao';
 import type { LeadIndicacao } from '@/app/actions/leads-indicacao';
 
@@ -153,14 +151,12 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
     window.open(`https://wa.me/?text=${texto}`, '_blank');
   };
 
-  const handleStatusChange = async (leadId: string, novoStatus: string) => {
-    const result = await atualizarStatusLead(leadId, novoStatus);
-    if (result.success) {
-      toast.success('Status atualizado');
-      fetchData();
-    } else {
-      toast.error('Erro ao atualizar');
-    }
+  // Primeiro nome apenas (mascarar sobrenome para privacidade)
+  const getPrimeiroNome = (nome: string | null) => {
+    if (!nome) return 'Lead';
+    const partes = nome.trim().split(' ');
+    if (partes.length <= 1) return partes[0];
+    return `${partes[0]} ${partes[1]?.[0] || ''}.`;
   };
 
   const formatCurrency = (v: number | null) =>
@@ -373,7 +369,7 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                   setBusca(e.target.value);
                   setPagina(1);
                 }}
-                placeholder="Buscar por nome, email ou telefone..."
+                placeholder="Buscar por nome..."
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-[#D4AF37]/40"
               />
             </div>
@@ -417,11 +413,8 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                   <thead>
                     <tr className="border-b border-white/[0.06]">
                       <th className="text-left px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Lead</th>
-                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Operadora</th>
-                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Valor Atual</th>
-                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden lg:table-cell">Economia Est.</th>
-                      <th className="text-center px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Vidas</th>
                       <th className="text-center px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase">Status</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden md:table-cell">Economia Est.</th>
                       <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#D4AF37] uppercase hidden lg:table-cell">Data</th>
                     </tr>
                   </thead>
@@ -436,63 +429,34 @@ export default function IndicacoesPanel({ corretorId, slug: initialSlug }: { cor
                           className="border-b border-white/[0.04] hover:bg-white/[0.02]"
                         >
                           <td className="px-4 py-3">
-                            <div>
-                              <p className="text-sm text-white font-medium">{lead.nome || 'Lead anônimo'}</p>
-                              <div className="flex items-center gap-3 mt-0.5">
-                                {lead.telefone && (
-                                  <a
-                                    href={`https://wa.me/55${lead.telefone.replace(/\D/g, '')}`}
-                                    target="_blank"
-                                    className="text-[11px] text-green-400/60 hover:text-green-400 flex items-center gap-1"
-                                  >
-                                    <Phone className="h-3 w-3" />
-                                    {lead.telefone}
-                                  </a>
-                                )}
-                                {lead.email && (
-                                  <span className="text-[11px] text-white/30 flex items-center gap-1">
-                                    <Mail className="h-3 w-3" />
-                                    {lead.email}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                            <p className="text-sm text-white font-medium">{getPrimeiroNome(lead.nome)}</p>
+                            <p className="text-[11px] text-white/20 mt-0.5">{lead.qtd_vidas} vida{lead.qtd_vidas !== 1 ? 's' : ''}</p>
                           </td>
-                          <td className="px-4 py-3 text-xs text-white/50 hidden md:table-cell">{lead.operadora_atual || '—'}</td>
-                          <td className="px-4 py-3 text-right">
-                            <span className="text-sm text-white font-medium">{formatCurrency(lead.valor_atual)}</span>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg',
+                                statusCfg.bg,
+                                statusCfg.color,
+                              )}
+                            >
+                              {lead.status === 'fechado' && <CheckCircle className="h-3 w-3" />}
+                              {lead.status === 'em_analise' && <Target className="h-3 w-3" />}
+                              {lead.status === 'entrou_em_contato' && <MessageCircle className="h-3 w-3" />}
+                              {lead.status === 'simulou' && <Eye className="h-3 w-3" />}
+                              {lead.status === 'proposta_enviada' && <TrendingUp className="h-3 w-3" />}
+                              {statusCfg.label}
+                            </span>
                           </td>
-                          <td className="px-4 py-3 text-right hidden lg:table-cell">
+                          <td className="px-4 py-3 text-right hidden md:table-cell">
                             {lead.economia_estimada ? (
                               <span className="text-sm text-green-400 font-medium">{formatCurrency(lead.economia_estimada)}</span>
                             ) : (
                               <span className="text-white/20">—</span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-center text-xs text-white/50 hidden md:table-cell">{lead.qtd_vidas}</td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={lead.status}
-                              onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                              className={cn(
-                                'text-xs font-medium px-3 py-1.5 rounded-lg border-none focus:outline-none cursor-pointer',
-                                statusCfg.bg,
-                                statusCfg.color,
-                              )}
-                            >
-                              {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                                <option key={key} value={key} className="bg-[#111]">{cfg.label}</option>
-                              ))}
-                            </select>
-                          </td>
                           <td className="px-4 py-3 text-right text-[11px] text-white/30 hidden lg:table-cell">
                             {formatDate(lead.created_at)}
-                            {lead.clicou_no_contato && (
-                              <p className="text-green-400/60 flex items-center justify-end gap-1 mt-0.5">
-                                <MessageCircle className="h-3 w-3" />
-                                Clicou contato
-                              </p>
-                            )}
                           </td>
                         </motion.tr>
                       );
