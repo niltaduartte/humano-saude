@@ -28,7 +28,6 @@ import {
   Loader2,
   CheckCircle,
   Send,
-  ClipboardList,
   Link2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -126,12 +125,6 @@ const menuItems: SidebarItem[] = [
     icon: Link2,
     href: `${B}/indicacoes`,
     badge: { text: 'NOVO', variant: 'gold' },
-  },
-  {
-    id: 'cadastro',
-    label: 'Cadastro',
-    icon: ClipboardList,
-    href: `${B}/meu-cadastro`,
   },
   {
     id: 'perfil',

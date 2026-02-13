@@ -6,6 +6,18 @@ import { createServiceClient } from '@/lib/supabase';
 // TYPES
 // ============================================
 
+export interface LeadIndicado {
+  id: string;
+  nome: string | null;
+  whatsapp: string | null;
+  operadora_atual: string | null;
+  status: string;
+  valor_atual: number | null;
+  economia_estimada: number | null;
+  created_at: string;
+  clicou_no_contato: boolean;
+}
+
 export interface CorretorIndicacoes {
   id: string;
   nome: string;
@@ -26,6 +38,7 @@ export interface CorretorIndicacoes {
   taxa_conversao: number; // ganhos / total
   valor_total_faturas: number;
   economia_total: number;
+  leads: LeadIndicado[];
 }
 
 export interface IndicacoesOverview {
@@ -63,7 +76,7 @@ export async function getIndicacoesOverview(): Promise<{
     // 2. Buscar todos os leads com corretor (insurance_leads)
     const { data: leadsAdmin, error: errLeads } = await sb
       .from('insurance_leads')
-      .select('id, status, valor_atual, economia_estimada, dados_pdf, created_at')
+      .select('id, nome, whatsapp, operadora_atual, status, valor_atual, economia_estimada, dados_pdf, created_at')
       .eq('arquivado', false);
 
     if (errLeads) {
@@ -73,7 +86,7 @@ export async function getIndicacoesOverview(): Promise<{
     // 3. Buscar leads da tabela leads_indicacao para complementar
     const { data: leadsIndicacao, error: errLI } = await sb
       .from('leads_indicacao')
-      .select('id, corretor_id, status, valor_atual, economia_estimada, created_at, clicou_no_contato');
+      .select('id, corretor_id, nome, telefone, operadora_atual, status, valor_atual, economia_estimada, created_at, clicou_no_contato');
 
     if (errLI) {
       return { success: false, data: null, error: errLI.message };
@@ -165,6 +178,51 @@ export async function getIndicacoesOverview(): Promise<{
       totalPerdidosGeral += perdidos;
       economiaGeral += economiaTotal;
 
+      // Montar lista de leads indicados (priorizar insurance_leads que tem nome)
+      // Criar mapa id leads_indicacao para obter clicou_no_contato
+      const indicacaoById = new Map<string, any>();
+      for (const li of leadsDoCorretor) {
+        indicacaoById.set(li.id, li);
+      }
+
+      const leadsIndicados: LeadIndicado[] = [];
+
+      // Primeiro: leads da insurance_leads (fonte principal — tem nome)
+      for (const la of leadsAdmin) {
+        leadsIndicados.push({
+          id: la.id,
+          nome: la.nome || null,
+          whatsapp: la.whatsapp || null,
+          operadora_atual: la.operadora_atual || null,
+          status: la.status,
+          valor_atual: Number(la.valor_atual) || null,
+          economia_estimada: Number(la.economia_estimada) || null,
+          created_at: la.created_at,
+          clicou_no_contato: false, // insurance_leads não tem esse campo
+        });
+      }
+
+      // Segundo: leads da leads_indicacao que NÃO estão no insurance_leads
+      const adminLeadIds = new Set(leadsAdmin.map((la: any) => la.id));
+      for (const li of leadsDoCorretor) {
+        // Evitar duplicatas (já incluídas via insurance_leads)
+        if (adminLeadIds.has(li.id)) continue;
+        leadsIndicados.push({
+          id: li.id,
+          nome: li.nome || null,
+          whatsapp: li.telefone || null,
+          operadora_atual: li.operadora_atual || null,
+          status: statusToAdmin[li.status] || li.status,
+          valor_atual: Number(li.valor_atual) || null,
+          economia_estimada: Number(li.economia_estimada) || null,
+          created_at: li.created_at,
+          clicou_no_contato: li.clicou_no_contato || false,
+        });
+      }
+
+      // Ordenar por data (mais recente primeiro)
+      leadsIndicados.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
       return {
         id: c.id,
         nome: c.nome,
@@ -184,6 +242,7 @@ export async function getIndicacoesOverview(): Promise<{
         taxa_conversao: total > 0 ? Math.round((ganhos / total) * 100) : 0,
         valor_total_faturas: valorFaturas,
         economia_total: economiaTotal,
+        leads: leadsIndicados,
       };
     });
 

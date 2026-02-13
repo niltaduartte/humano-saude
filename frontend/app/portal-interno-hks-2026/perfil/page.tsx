@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { User, Camera, Save, Mail, Phone, MapPin, Building, Calendar, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { User, Camera, Trash2, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAdminProfile, saveAdminProfile } from '@/app/actions/integrations';
 
@@ -15,9 +16,12 @@ export default function PerfilPage() {
     bio: '',
     creci: '',
     susep: '',
+    foto_url: '' as string | null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -41,6 +45,64 @@ export default function PerfilPage() {
     }
   }
 
+  async function handleFotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 5MB.');
+      return;
+    }
+
+    setUploadingFoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('foto', file);
+
+      const res = await fetch('/api/admin/foto', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (data.success) {
+        setProfile((prev) => ({ ...prev, foto_url: data.foto_url }));
+        toast.success('Foto atualizada!');
+      } else {
+        toast.error(data.error || 'Erro ao enviar foto');
+      }
+    } catch {
+      toast.error('Erro ao enviar foto');
+    } finally {
+      setUploadingFoto(false);
+      if (fotoInputRef.current) fotoInputRef.current.value = '';
+    }
+  }
+
+  async function handleFotoRemove() {
+    setUploadingFoto(true);
+    try {
+      const res = await fetch('/api/admin/foto', { method: 'DELETE' });
+      const data = await res.json();
+
+      if (data.success) {
+        setProfile((prev) => ({ ...prev, foto_url: null }));
+        toast.success('Foto removida');
+      } else {
+        toast.error(data.error || 'Erro ao remover foto');
+      }
+    } catch {
+      toast.error('Erro ao remover foto');
+    } finally {
+      setUploadingFoto(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-[#D4AF37]" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-6">
@@ -60,21 +122,65 @@ export default function PerfilPage() {
         </button>
       </div>
 
-      {/* Avatar Section */}
+      {/* Avatar Section com Upload */}
       <div className="rounded-lg border border-white/10 bg-[#0a0a0a] p-6">
         <div className="flex items-center gap-6">
-          <div className="relative">
-            <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#F6E05E] flex items-center justify-center">
-              <User className="h-12 w-12 text-black" />
+          {/* Foto com hover overlay */}
+          <div className="relative group">
+            <div className="h-24 w-24 rounded-full overflow-hidden bg-gradient-to-br from-[#D4AF37] to-[#F6E05E] flex items-center justify-center">
+              {profile.foto_url ? (
+                <Image
+                  src={profile.foto_url}
+                  alt="Foto do perfil"
+                  width={96}
+                  height={96}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <User className="h-12 w-12 text-black" />
+              )}
             </div>
-            <button className="absolute bottom-0 right-0 rounded-full bg-[#D4AF37] p-1.5 text-black hover:bg-[#F6E05E] transition-colors">
-              <Camera className="h-3.5 w-3.5" />
-            </button>
+
+            {/* Hover overlay */}
+            <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              {uploadingFoto ? (
+                <Loader2 className="h-5 w-5 animate-spin text-white" />
+              ) : (
+                <>
+                  <button
+                    onClick={() => fotoInputRef.current?.click()}
+                    className="rounded-full bg-[#D4AF37] p-1.5 text-black hover:bg-[#F6E05E] transition-colors"
+                    title="Alterar foto"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                  </button>
+                  {profile.foto_url && (
+                    <button
+                      onClick={handleFotoRemove}
+                      className="rounded-full bg-red-600 p-1.5 text-white hover:bg-red-500 transition-colors"
+                      title="Remover foto"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            <input
+              ref={fotoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleFotoUpload}
+              className="hidden"
+            />
           </div>
+
           <div>
             <h2 className="text-xl font-bold text-white">{profile.nome}</h2>
             <p className="text-sm text-gray-400">{profile.cargo} — {profile.empresa}</p>
             <p className="text-sm text-[#D4AF37] mt-1">{profile.email}</p>
+            <p className="text-xs text-gray-500 mt-1">Passe o mouse na foto para alterar</p>
           </div>
         </div>
       </div>

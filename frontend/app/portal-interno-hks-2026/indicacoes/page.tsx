@@ -18,7 +18,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { getIndicacoesOverview } from '@/app/actions/indicacoes-admin';
-import type { CorretorIndicacoes, IndicacoesOverview } from '@/app/actions/indicacoes-admin';
+import type { CorretorIndicacoes, IndicacoesOverview, LeadIndicado } from '@/app/actions/indicacoes-admin';
 import {
   PageHeader,
   StatsCard,
@@ -38,6 +38,21 @@ const FUNIL_STEPS = [
   { key: 'total_ganhos', label: 'Ganhos', color: 'bg-green-500', textColor: 'text-green-400', icon: CheckCircle },
   { key: 'total_perdidos', label: 'Perdidos', color: 'bg-red-500', textColor: 'text-red-400', icon: XCircle },
 ] as const;
+
+// Status labels / colors para os leads indicados
+const LEAD_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  novo: { label: 'Novo', color: 'bg-blue-500/20 text-blue-400' },
+  contatado: { label: 'Contatado', color: 'bg-yellow-500/20 text-yellow-400' },
+  negociacao: { label: 'Negociação', color: 'bg-purple-500/20 text-purple-400' },
+  proposta_enviada: { label: 'Proposta', color: 'bg-orange-500/20 text-orange-400' },
+  ganho: { label: 'Ganho', color: 'bg-green-500/20 text-green-400' },
+  perdido: { label: 'Perdido', color: 'bg-red-500/20 text-red-400' },
+  simulou: { label: 'Simulou', color: 'bg-blue-500/20 text-blue-400' },
+  entrou_em_contato: { label: 'Contatou', color: 'bg-yellow-500/20 text-yellow-400' },
+  em_analise: { label: 'Análise', color: 'bg-purple-500/20 text-purple-400' },
+  fechado: { label: 'Fechado', color: 'bg-green-500/20 text-green-400' },
+};
+const LEAD_STATUS_FALLBACK = { label: 'Desconhecido', color: 'bg-gray-500/20 text-gray-400' };
 
 // ============================================
 // COMPONENTE: Barra de Funil
@@ -206,6 +221,84 @@ function CorretorCard({ corretor }: { corretor: CorretorIndicacoes }) {
               </p>
             </div>
           </div>
+
+          {/* Lista de Leads Indicados */}
+          {corretor.leads && corretor.leads.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Leads Indicados ({corretor.leads.length})
+              </h4>
+              <div className="overflow-x-auto rounded-lg border border-white/5">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-white/5 text-left text-[10px] uppercase tracking-wider text-gray-600">
+                      <th className="px-3 py-2">Nome</th>
+                      <th className="hidden px-3 py-2 sm:table-cell">Operadora</th>
+                      <th className="px-3 py-2 text-center">Status</th>
+                      <th className="hidden px-3 py-2 text-right md:table-cell">Valor</th>
+                      <th className="hidden px-3 py-2 text-right md:table-cell">Economia</th>
+                      <th className="px-3 py-2 text-right">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.03]">
+                    {corretor.leads.map((lead) => {
+                      const st = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_FALLBACK;
+                      return (
+                        <tr key={lead.id} className="transition-colors hover:bg-white/[0.02]">
+                          <td className="px-3 py-2">
+                            <div>
+                              <p className="font-medium text-white">
+                                {lead.nome || (
+                                  <span className="italic text-gray-600">Anônimo</span>
+                                )}
+                              </p>
+                              {lead.whatsapp && (
+                                <a
+                                  href={`https://wa.me/55${lead.whatsapp.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-green-500 hover:text-green-400"
+                                >
+                                  {lead.whatsapp}
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                          <td className="hidden px-3 py-2 text-gray-400 sm:table-cell">
+                            {lead.operadora_atual || '—'}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${st.color}`}>
+                              {st.label}
+                            </span>
+                          </td>
+                          <td className="hidden px-3 py-2 text-right text-gray-400 md:table-cell">
+                            {lead.valor_atual
+                              ? `R$ ${Number(lead.valor_atual).toLocaleString('pt-BR')}`
+                              : '—'}
+                          </td>
+                          <td className="hidden px-3 py-2 text-right text-emerald-400 md:table-cell">
+                            {lead.economia_estimada
+                              ? `R$ ${Number(lead.economia_estimada).toLocaleString('pt-BR')}`
+                              : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-500">
+                            {new Date(lead.created_at).toLocaleDateString('pt-BR')}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {corretor.leads && corretor.leads.length === 0 && (
+            <div className="mt-4 rounded-lg border border-white/5 py-6 text-center text-xs text-gray-600">
+              Nenhum lead indicado por este corretor ainda
+            </div>
+          )}
         </div>
       )}
     </div>

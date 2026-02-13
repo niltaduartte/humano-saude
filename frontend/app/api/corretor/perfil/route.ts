@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Buscar dados do corretor
     const { data: corretor, error: corretorErr } = await supabase
       .from('corretores')
-      .select('id, nome, cpf, email, telefone, whatsapp, susep, slug, data_admissao, metadata, created_at')
+      .select('id, nome, cpf, email, telefone, whatsapp, susep, slug, data_admissao, metadata, created_at, foto_url')
       .eq('id', corretorId)
       .eq('ativo', true)
       .single();
@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
         data_admissao: corretor.data_admissao,
         created_at: corretor.created_at,
         metadata: corretor.metadata || {},
+        foto_url: corretor.foto_url || null,
       },
       dados_bancarios: dadosBancarios || [],
       alteracoes: alteracoes || [],

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   LayoutDashboard,
@@ -226,7 +226,6 @@ const sidebarItems: SidebarItem[] = [
     id: "corretores",
     label: "Corretores",
     icon: Briefcase,
-    href: `${P}/corretores`,
     color: "gold",
     badge: { text: "NOVO", variant: "gold" as BadgeVariant },
     children: [
@@ -301,37 +300,13 @@ const badgeStyles: Record<BadgeVariant, string> = {
   green: "bg-green-500/20 text-green-400",
 }
 
-// Resolve cor de destaque por grupo
-function resolveColors(item: SidebarItem, isHighlighted: boolean) {
-  if (item.color === "blue") {
-    return {
-      parentBg: isHighlighted ? "bg-blue-600/15 border border-blue-500/30" : "border border-transparent hover:bg-white/5",
-      icon: isHighlighted ? "text-blue-400" : "text-white/50",
-      text: isHighlighted ? "text-blue-400" : "text-white/70",
-      childActive: "bg-blue-600/15 text-blue-300",
-    }
-  }
-  if (item.color === "green") {
-    return {
-      parentBg: isHighlighted ? "bg-green-600/15 border border-green-500/30" : "border border-transparent hover:bg-white/5",
-      icon: isHighlighted ? "text-green-400" : "text-white/50",
-      text: isHighlighted ? "text-green-400" : "text-white/70",
-      childActive: "bg-green-600/15 text-green-300",
-    }
-  }
-  if (item.color === "gold") {
-    return {
-      parentBg: isHighlighted ? "bg-[#D4AF37]/15 border border-[#D4AF37]/30" : "border border-transparent hover:bg-white/5",
-      icon: isHighlighted ? "text-[#D4AF37]" : "text-white/50",
-      text: isHighlighted ? "text-[#D4AF37]" : "text-white/70",
-      childActive: "bg-[#D4AF37]/15 text-[#F4D03F]",
-    }
-  }
+// Resolve cor de destaque — padronizado dourado para todo o painel
+function resolveColors(_item: SidebarItem, isHighlighted: boolean) {
   return {
-    parentBg: isHighlighted ? "bg-white/5 border border-transparent" : "border border-transparent hover:bg-white/5",
-    icon: isHighlighted ? "text-white" : "text-white/50",
-    text: isHighlighted ? "text-white" : "text-white/70",
-    childActive: "bg-white/5 text-white",
+    parentBg: isHighlighted ? "bg-[#D4AF37]/10 border border-[#D4AF37]/20" : "border border-transparent hover:bg-white/5",
+    icon: isHighlighted ? "text-[#D4AF37]" : "text-white/50",
+    text: isHighlighted ? "text-[#D4AF37]" : "text-white/70",
+    childActive: "bg-[#D4AF37]/20 text-[#F4D03F] font-medium border-l-2 border-[#D4AF37]",
   }
 }
 
@@ -342,7 +317,8 @@ function resolveColors(item: SidebarItem, isHighlighted: boolean) {
 export default function DockSidebar() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set())
+  // Menus que o USUÁRIO explicitamente abriu/fechou (null = nunca tocou)
+  const [userToggles, setUserToggles] = useState<Record<string, boolean>>({})
   const [showConvite, setShowConvite] = useState(false)
   const [conviteEmail, setConviteEmail] = useState('')
   const [conviteLoading, setConviteLoading] = useState(false)
@@ -350,18 +326,50 @@ export default function DockSidebar() {
   const [conviteMsg, setConviteMsg] = useState('')
   const pathname = usePathname()
   const router = useRouter()
+  const prevPathname = useRef(pathname)
 
+  // Quando o pathname muda, limpa os toggles manuais para que
+  // o auto-open do menu ativo funcione corretamente
+  useEffect(() => {
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname
+      setUserToggles({})
+    }
+  }, [pathname])
+
+  // Verificar se um href é a rota ativa (match exato OU sub-rota)
   const isActive = (href: string) => pathname === href
+  const isHrefMatch = (href: string) => pathname === href || pathname.startsWith(href + "/")
+
+  // Para children: match exato, OU sub-rota MAS apenas se não houver
+  // outro sibling que faça match mais específico (mais longo)
+  const isChildActiveHref = (href: string, siblings: SubItem[]) => {
+    if (pathname === href) return true
+    if (!pathname.startsWith(href + "/")) return false
+    // É sub-rota — verificar se existe outro sibling com match mais específico
+    const longerMatch = siblings.some(
+      (s) => s.href !== href && s.href.length > href.length && (pathname === s.href || pathname.startsWith(s.href + "/"))
+    )
+    return !longerMatch
+  }
+
+  // Verificar se algum filho de um item pai está ativo
   const isChildActive = (item: SidebarItem) =>
-    item.children?.some((c) => pathname === c.href || pathname.startsWith(c.href + "/")) ?? false
+    item.children?.some((c) => isHrefMatch(c.href)) ?? false
+
+  // Determinar se um menu accordion está aberto:
+  // 1. Se o usuário clicou explicitamente → usar decisão dele
+  // 2. Senão → auto-abrir se tem filho ativo
+  const isMenuOpen = (item: SidebarItem) => {
+    if (userToggles[item.id] !== undefined) return userToggles[item.id]
+    return isChildActive(item)
+  }
 
   const toggleMenu = (id: string) => {
-    setOpenMenus((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+    setUserToggles((prev) => ({
+      ...prev,
+      [id]: !isMenuOpen(sidebarItems.find((i) => i.id === id)!),
+    }))
   }
 
   const handleLogout = async () => {
@@ -397,12 +405,6 @@ export default function DockSidebar() {
     }
   }
 
-  // Auto-abrir pai do item ativo
-  const effectiveOpen = new Set(openMenus)
-  sidebarItems.forEach((item) => {
-    if (item.children && isChildActive(item)) effectiveOpen.add(item.id)
-  })
-
   // ============================================
   // RENDER MENU ITEMS
   // ============================================
@@ -412,9 +414,10 @@ export default function DockSidebar() {
       {sidebarItems.map((item) => {
         const Icon = item.icon
         const hasChildren = !!item.children?.length
-        const isOpen = effectiveOpen.has(item.id)
+        const isOpen = hasChildren ? isMenuOpen(item) : false
+        const childActive = hasChildren && isChildActive(item)
         const active = item.href ? isActive(item.href) : false
-        const highlighted = active || (hasChildren && (isOpen || isChildActive(item)))
+        const highlighted = active || childActive || isOpen
         const colors = resolveColors(item, highlighted)
 
         // Link direto (sem filhos)
@@ -478,14 +481,14 @@ export default function DockSidebar() {
                   <div className="ml-4 pl-3 border-l border-white/10 mt-1 space-y-0.5">
                     {item.children?.map((child) => {
                       const ChildIcon = child.icon
-                      const childIsActive = isActive(child.href) || pathname.startsWith(child.href + "/")
+                      const childIsActive = isChildActiveHref(child.href, item.children || [])
                       return (
                         <Link key={child.id} href={child.href} onClick={onNav}>
                           <div className={cn(
                             "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
                             childIsActive ? colors.childActive : "text-white/60 hover:text-white/80 hover:bg-white/5"
                           )}>
-                            <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                            <ChildIcon className={cn("h-4 w-4 flex-shrink-0", childIsActive && "opacity-100")} />
                             <span className="text-sm truncate">{child.label}</span>
                             {child.badge && (
                               <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-bold ml-auto", badgeStyles[child.badge.variant])}>{child.badge.text}</span>
