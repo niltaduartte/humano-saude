@@ -3,14 +3,11 @@
 // Roda a cada 6h — renova tokens prestes a expirar
 // ============================================
 
-import { createClient } from "@supabase/supabase-js"
+import { createServiceClient } from "@/lib/supabase"
 import { UniversalPublisher } from "../core/publisher"
 import type { SocialAccount, WorkerReport } from "../types"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createServiceClient()
 
 export class TokenRefresherWorker {
   static async run(): Promise<WorkerReport> {

@@ -3,15 +3,12 @@
 // Roda a cada 1 min via cron — publica posts agendados
 // ============================================
 
-import { createClient } from "@supabase/supabase-js"
+import { createServiceClient } from "@/lib/supabase"
 import { SchedulerService } from "../core/scheduler"
 import { UniversalPublisher } from "../core/publisher"
 import type { SocialAccount, SocialMediaItem, WorkerReport } from "../types"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createServiceClient()
 
 export class PublishSchedulerWorker {
   static async run(): Promise<WorkerReport> {

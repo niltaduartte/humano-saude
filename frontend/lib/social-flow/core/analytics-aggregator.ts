@@ -3,7 +3,7 @@
 // Agrega métricas de múltiplas contas/redes
 // ============================================
 
-import { createClient } from "@supabase/supabase-js"
+import { createServiceClient } from "@/lib/supabase"
 import type {
   PostMetrics,
   AccountMetricsHistory,
@@ -11,10 +11,7 @@ import type {
   SocialPost,
 } from "../types"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createServiceClient()
 
 export interface DashboardStats {
   totalFollowers: number

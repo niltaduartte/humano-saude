@@ -3,14 +3,11 @@
 // Gerencia agendamento e fila de publicação
 // ============================================
 
-import { createClient } from "@supabase/supabase-js"
+import { createServiceClient } from "@/lib/supabase"
 import type { SocialPost, ScheduleResult } from "../types"
 import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createServiceClient()
 
 export class SchedulerService {
   // Agenda um post para publicação futura

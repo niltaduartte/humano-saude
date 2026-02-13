@@ -3,7 +3,7 @@
 // Publica em qualquer rede via adapter pattern
 // ============================================
 
-import { createClient } from "@supabase/supabase-js"
+import { createServiceClient } from "@/lib/supabase"
 import type {
   SocialAccount,
   SocialPost,
@@ -13,10 +13,7 @@ import type {
   SocialNetwork,
 } from "../types"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createServiceClient()
 
 // Registry de adapters por rede
 const adapterRegistry = new Map<SocialNetwork, NetworkAdapter>()
