@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { logger } from '@/lib/logger';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy initialization — não instanciar no module scope para evitar erro em build sem OPENAI_API_KEY
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 /**
  * POST /api/auth/corretor/validar-documento
@@ -73,7 +76,7 @@ Responda APENAS com um JSON no formato: {"valido": true/false, "motivo": "explic
       imageUrl = `data:image/jpeg;base64,${imageBase64}`;
     }
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       max_tokens: 200,
       messages: [
