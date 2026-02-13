@@ -1,101 +1,66 @@
 'use client';
 
-import { useCallback } from 'react';
-import { Building2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Building2, Sparkles, Users, DollarSign, Globe } from 'lucide-react';
 import { useCorretorId } from '../../hooks/useCorretorToken';
-import { useCorretorCompanies } from '../hooks/useCorretorCrm';
-import { createCompany, deleteCompany } from '@/app/actions/crm';
-import CompaniesTable from '@/app/portal-interno-hks-2026/crm/components/CompaniesTable';
-import type { CrmCompanyFilters } from '@/lib/types/crm';
 
 export default function CorretorCompaniesPage() {
   const corretorId = useCorretorId();
-  const companies = useCorretorCompanies(corretorId || null);
-
-  const handleNewCompany = useCallback(async () => {
-    if (!corretorId) return;
-    const res = await createCompany({
-      nome: 'Nova Empresa',
-      cnpj: null,
-      razao_social: null,
-      dominio: null,
-      setor: null,
-      porte: null,
-      qtd_funcionarios: null,
-      faturamento_anual: null,
-      telefone: null,
-      email: null,
-      endereco: {},
-      logo_url: null,
-      tags: [],
-      custom_fields: {},
-      owner_corretor_id: corretorId,
-    });
-    if (res.success) {
-      toast.success('Empresa criada!');
-      companies.refetch();
-    } else {
-      toast.error(res.error ?? 'Erro ao criar empresa');
-    }
-  }, [corretorId, companies]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    if (!confirm('Remover esta empresa?')) return;
-    const res = await deleteCompany(id);
-    if (res.success) {
-      toast.success('Empresa removida');
-      companies.refetch();
-    } else {
-      toast.error(res.error ?? 'Erro ao remover');
-    }
-  }, [companies]);
-
-  const handleFilterChange = useCallback((partial: Partial<CrmCompanyFilters>) => {
-    for (const [key, value] of Object.entries(partial)) {
-      companies.updateFilter(key as keyof CrmCompanyFilters, value);
-    }
-  }, [companies]);
 
   if (!corretorId) return null;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-[1200px] mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-[#D4AF37]" />
-            Minhas <span className="text-[#D4AF37]">Empresas</span>
-          </h1>
-          <p className="text-sm text-white/40 mt-1">
-            Gestão de contas corporativas e empresas vinculadas
-          </p>
-        </div>
-        <button
-          onClick={handleNewCompany}
-          className="flex items-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-2.5 text-sm font-semibold text-black hover:bg-[#F6E05E] transition-colors"
-        >
-          <Building2 className="h-4 w-4" />
-          Nova Empresa
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <Building2 className="h-6 w-6 text-[#D4AF37]" />
+          Minhas <span className="text-[#D4AF37]">Empresas</span>
+        </h1>
+        <p className="text-sm text-white/40 mt-1">
+          Gestão de contas corporativas e empresas vinculadas
+        </p>
       </div>
 
-      {/* Table */}
-      {companies.result && (
-        <CompaniesTable
-          companies={companies.result.data}
-          loading={companies.loading}
-          total={companies.result.total}
-          page={companies.result.page}
-          perPage={companies.result.perPage}
-          filters={companies.filters}
-          onFilterChange={handleFilterChange}
-          onPageChange={(p) => companies.updateFilter('page', p)}
-          onRowClick={() => {}}
-          onDelete={handleDelete}
-        />
-      )}
+      {/* Coming Soon Card */}
+      <div className="relative rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#D4AF37]/5 via-transparent to-transparent p-12 text-center overflow-hidden">
+        {/* Gold shimmer */}
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/20 to-transparent" />
+
+        <div className="relative">
+          <div className="mx-auto mb-6 h-20 w-20 rounded-2xl bg-[#D4AF37]/10 flex items-center justify-center">
+            <Building2 className="h-10 w-10 text-[#D4AF37]" />
+          </div>
+          
+          <h2 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+            <Sparkles className="h-5 w-5 text-[#D4AF37]" />
+            Módulo Empresas — Em Breve
+          </h2>
+          <p className="text-sm text-white/50 max-w-md mx-auto mb-8">
+            O módulo de gestão de empresas está sendo preparado. Em breve você poderá
+            cadastrar e gerenciar empresas, vincular contatos, acompanhar deals
+            corporativos e muito mais.
+          </p>
+
+          {/* Features Preview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            {[
+              { icon: Users, label: 'Contatos por empresa', desc: 'Vincule contatos à empresa' },
+              { icon: DollarSign, label: 'Deals corporativos', desc: 'Acompanhe negócios PME' },
+              { icon: Globe, label: 'Dados enriquecidos', desc: 'CNPJ, porte, setor, faturamento' },
+            ].map((feature) => (
+              <div
+                key={feature.label}
+                className="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center"
+              >
+                <feature.icon className="h-6 w-6 text-[#D4AF37]/60 mx-auto mb-2" />
+                <p className="text-xs font-medium text-white/70">{feature.label}</p>
+                <p className="text-[10px] text-white/30 mt-0.5">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

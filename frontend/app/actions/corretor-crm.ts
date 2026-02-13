@@ -134,6 +134,95 @@ export async function createCrmCard(data: CrmCardInsert): Promise<{
   }
 }
 
+// ========================================
+// CRIAR LEAD COMPLETO + CARD NO PIPELINE
+// ========================================
+
+export async function createLeadWithCard(input: {
+  corretor_id: string;
+  coluna_slug: KanbanColumnSlug;
+  // Dados do lead
+  nome: string;
+  whatsapp: string;
+  email?: string | null;
+  operadora_atual?: string | null;
+  valor_atual?: number | null;
+  tipo_contratacao?: string | null;
+  idades?: number[];
+  observacoes?: string | null;
+  // Dados do card
+  valor_estimado?: number | null;
+  prioridade?: 'baixa' | 'media' | 'alta' | 'urgente';
+  tags?: string[];
+}): Promise<{ success: boolean; data?: CrmCard; error?: string }> {
+  try {
+    const supabase = createServiceClient();
+
+    // 1. Cria o lead na insurance_leads
+    const { data: lead, error: leadError } = await supabase
+      .from('insurance_leads')
+      .insert({
+        nome: input.nome,
+        whatsapp: input.whatsapp,
+        email: input.email ?? null,
+        operadora_atual: input.operadora_atual ?? null,
+        valor_atual: input.valor_atual ?? null,
+        tipo_contratacao: input.tipo_contratacao ?? null,
+        idades: input.idades ?? [],
+        status: 'novo',
+        origem: 'corretor_crm',
+        prioridade: input.prioridade ?? 'media',
+        observacoes: input.observacoes ?? null,
+        atribuido_a: null,
+      })
+      .select()
+      .single();
+
+    if (leadError) throw leadError;
+
+    // 2. Cria o card no kanban vinculado ao lead
+    const { data: card, error: cardError } = await supabase
+      .from('crm_cards')
+      .insert({
+        corretor_id: input.corretor_id,
+        lead_id: lead.id,
+        coluna_slug: input.coluna_slug,
+        titulo: input.nome,
+        subtitulo: input.operadora_atual
+          ? `${input.operadora_atual}${input.valor_atual ? ` · R$ ${input.valor_atual.toLocaleString('pt-BR')}` : ''}`
+          : null,
+        valor_estimado: input.valor_estimado ?? null,
+        posicao: 0,
+        score: 0,
+        score_motivo: null,
+        ultima_interacao_proposta: null,
+        total_interacoes: 0,
+        tags: input.tags ?? [],
+        prioridade: input.prioridade ?? 'media',
+        metadata: {},
+      })
+      .select()
+      .single();
+
+    if (cardError) throw cardError;
+
+    // 3. Registra interação de criação
+    await supabase.from('crm_interacoes').insert({
+      card_id: card.id,
+      corretor_id: input.corretor_id,
+      lead_id: lead.id,
+      tipo: 'sistema',
+      titulo: 'Lead criado via CRM',
+      descricao: `Lead "${input.nome}" (${input.whatsapp}) adicionado ao pipeline`,
+    });
+
+    return { success: true, data: card };
+  } catch (err) {
+    logger.error('[createLeadWithCard]', err);
+    return { success: false, error: 'Erro ao criar lead' };
+  }
+}
+
 export async function updateCrmCard(
   cardId: string,
   updates: CrmCardUpdate,

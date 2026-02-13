@@ -19,10 +19,19 @@ import {
   FileText,
   Trophy,
   XCircle,
+  X,
+  DollarSign,
+  Building2,
+  Users,
+  Tag,
+  Flag,
+  StickyNote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CrmCardEnriched, KanbanColumnSlug, KanbanBoard } from '@/lib/types/corretor';
 import { useKanban } from '../hooks/useKanban';
+import { createLeadWithCard } from '@/app/actions/corretor-crm';
+import { toast } from 'sonner';
 import LeadDrawer from './LeadDrawer';
 
 // ========================================
@@ -318,6 +327,362 @@ function KanbanColumn({
 }
 
 // ========================================
+// NEW LEAD MODAL — Formulário completo
+// ========================================
+
+const OPERADORAS = [
+  'Bradesco Saúde', 'SulAmérica', 'Amil', 'Unimed', 'NotreDame Intermédica',
+  'Hapvida', 'Porto Seguro Saúde', 'Prevent Senior', 'São Cristóvão',
+  'Golden Cross', 'MedSênior', 'Care Plus', 'Assim Saúde', 'Outro',
+];
+
+const TIPOS_CONTRATACAO = [
+  { value: 'pme', label: 'PME (Empresarial)' },
+  { value: 'adesao', label: 'Adesão' },
+  { value: 'individual', label: 'Individual' },
+  { value: 'familiar', label: 'Familiar' },
+  { value: 'coletivo', label: 'Coletivo por Adesão' },
+];
+
+const PRIORIDADES = [
+  { value: 'baixa', label: 'Baixa', color: 'text-green-400', bg: 'bg-green-500/10' },
+  { value: 'media', label: 'Média', color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+  { value: 'alta', label: 'Alta', color: 'text-orange-400', bg: 'bg-orange-500/10' },
+  { value: 'urgente', label: 'Urgente', color: 'text-red-400', bg: 'bg-red-500/10' },
+];
+
+type NewLeadForm = {
+  nome: string;
+  whatsapp: string;
+  email: string;
+  operadora_atual: string;
+  valor_atual: string;
+  tipo_contratacao: string;
+  idades: string;
+  observacoes: string;
+  valor_estimado: string;
+  prioridade: 'baixa' | 'media' | 'alta' | 'urgente';
+  tags: string;
+};
+
+const EMPTY_FORM: NewLeadForm = {
+  nome: '',
+  whatsapp: '',
+  email: '',
+  operadora_atual: '',
+  valor_atual: '',
+  tipo_contratacao: '',
+  idades: '',
+  observacoes: '',
+  valor_estimado: '',
+  prioridade: 'media',
+  tags: '',
+};
+
+function NewLeadModal({
+  isOpen,
+  onClose,
+  corretorId,
+  colunaSlug,
+  onSuccess,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  corretorId: string;
+  colunaSlug: KanbanColumnSlug;
+  onSuccess: () => void;
+}) {
+  const [form, setForm] = useState<NewLeadForm>({ ...EMPTY_FORM });
+  const [saving, setSaving] = useState(false);
+
+  const update = (field: keyof NewLeadForm, value: string) => {
+    setForm((p) => ({ ...p, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.nome.trim()) { toast.error('Nome é obrigatório'); return; }
+    if (!form.whatsapp.trim()) { toast.error('WhatsApp é obrigatório'); return; }
+
+    // Validar formato WhatsApp
+    const phone = form.whatsapp.replace(/\D/g, '');
+    if (phone.length < 10 || phone.length > 15) {
+      toast.error('WhatsApp inválido. Use formato: 11999998888');
+      return;
+    }
+
+    setSaving(true);
+    const result = await createLeadWithCard({
+      corretor_id: corretorId,
+      coluna_slug: colunaSlug,
+      nome: form.nome.trim(),
+      whatsapp: phone.startsWith('55') ? `+${phone}` : `+55${phone}`,
+      email: form.email.trim() || null,
+      operadora_atual: form.operadora_atual || null,
+      valor_atual: form.valor_atual ? parseFloat(form.valor_atual) : null,
+      tipo_contratacao: form.tipo_contratacao || null,
+      idades: form.idades
+        ? form.idades.split(',').map((a) => parseInt(a.trim(), 10)).filter((n) => !isNaN(n))
+        : [],
+      observacoes: form.observacoes.trim() || null,
+      valor_estimado: form.valor_estimado ? parseFloat(form.valor_estimado) : null,
+      prioridade: form.prioridade,
+      tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+    });
+
+    setSaving(false);
+    if (result.success) {
+      toast.success(`Lead "${form.nome}" criado com sucesso!`);
+      setForm({ ...EMPTY_FORM });
+      onClose();
+      onSuccess();
+    } else {
+      toast.error(result.error ?? 'Erro ao criar lead');
+    }
+  };
+
+  const inputClass =
+    'w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/20 transition-all';
+  const labelClass = 'block text-xs font-medium text-white/50 mb-1.5';
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4 rounded-2xl bg-[#0A0A0A] border border-white/10 shadow-2xl"
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between p-6 pb-4 border-b border-white/5 bg-[#0A0A0A]">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-[#D4AF37]" />
+              Novo Lead
+            </h2>
+            <p className="text-xs text-white/40 mt-0.5">
+              Adicionando em <span className="text-[#D4AF37] font-medium">{COLUMN_CONFIG[colunaSlug]?.label}</span>
+            </p>
+          </div>
+          <button onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-white/5 flex items-center justify-center">
+            <X className="h-4 w-4 text-white/40" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Seção: Dados pessoais */}
+          <div className="space-y-1">
+            <h3 className="text-xs font-semibold text-[#D4AF37]/80 uppercase tracking-wider flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" /> Dados do Lead
+            </h3>
+            <div className="h-px bg-gradient-to-r from-[#D4AF37]/20 to-transparent" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Nome completo *</label>
+              <input
+                type="text"
+                value={form.nome}
+                onChange={(e) => update('nome', e.target.value)}
+                placeholder="João da Silva"
+                className={inputClass}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className={labelClass}>WhatsApp *</label>
+              <input
+                type="tel"
+                value={form.whatsapp}
+                onChange={(e) => update('whatsapp', e.target.value)}
+                placeholder="(11) 99999-8888"
+                className={inputClass}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => update('email', e.target.value)}
+                placeholder="joao@email.com"
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          {/* Seção: Plano atual */}
+          <div className="space-y-1 pt-2">
+            <h3 className="text-xs font-semibold text-[#D4AF37]/80 uppercase tracking-wider flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5" /> Plano Atual
+            </h3>
+            <div className="h-px bg-gradient-to-r from-[#D4AF37]/20 to-transparent" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Operadora atual</label>
+              <select
+                value={form.operadora_atual}
+                onChange={(e) => update('operadora_atual', e.target.value)}
+                className={inputClass}
+              >
+                <option value="" className="bg-[#0A0A0A]">Selecione...</option>
+                {OPERADORAS.map((op) => (
+                  <option key={op} value={op} className="bg-[#0A0A0A]">{op}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Valor atual (R$/mês)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={form.valor_atual}
+                onChange={(e) => update('valor_atual', e.target.value)}
+                placeholder="1.200,00"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Tipo de contratação</label>
+              <select
+                value={form.tipo_contratacao}
+                onChange={(e) => update('tipo_contratacao', e.target.value)}
+                className={inputClass}
+              >
+                <option value="" className="bg-[#0A0A0A]">Selecione...</option>
+                {TIPOS_CONTRATACAO.map((t) => (
+                  <option key={t.value} value={t.value} className="bg-[#0A0A0A]">{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Idades dos beneficiários</label>
+              <input
+                type="text"
+                value={form.idades}
+                onChange={(e) => update('idades', e.target.value)}
+                placeholder="35, 33, 8, 5"
+                className={inputClass}
+              />
+              <p className="text-[10px] text-white/20 mt-1">Separe por vírgula</p>
+            </div>
+          </div>
+
+          {/* Seção: Negócio */}
+          <div className="space-y-1 pt-2">
+            <h3 className="text-xs font-semibold text-[#D4AF37]/80 uppercase tracking-wider flex items-center gap-1.5">
+              <DollarSign className="h-3.5 w-3.5" /> Negócio
+            </h3>
+            <div className="h-px bg-gradient-to-r from-[#D4AF37]/20 to-transparent" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Valor estimado do deal (R$)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={form.valor_estimado}
+                onChange={(e) => update('valor_estimado', e.target.value)}
+                placeholder="15.000"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Prioridade</label>
+              <div className="flex gap-2">
+                {PRIORIDADES.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => update('prioridade', p.value)}
+                    className={cn(
+                      'flex-1 px-3 py-2 rounded-xl text-xs font-medium border transition-all',
+                      form.prioridade === p.value
+                        ? `${p.bg} ${p.color} border-current`
+                        : 'border-white/5 text-white/30 hover:border-white/10',
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Tags</label>
+              <input
+                type="text"
+                value={form.tags}
+                onChange={(e) => update('tags', e.target.value)}
+                placeholder="plano-familia, urgente, indicação"
+                className={inputClass}
+              />
+              <p className="text-[10px] text-white/20 mt-1">Separe por vírgula</p>
+            </div>
+          </div>
+
+          {/* Observações */}
+          <div>
+            <label className={labelClass}>Observações</label>
+            <textarea
+              value={form.observacoes}
+              onChange={(e) => update('observacoes', e.target.value)}
+              placeholder="Quer migrar de plano, insatisfeito com carência..."
+              rows={3}
+              className={cn(inputClass, 'resize-none')}
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className={cn(
+                'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all',
+                saving
+                  ? 'bg-white/10 text-white/30 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-[#D4AF37] to-[#F6E05E] text-black hover:shadow-lg hover:shadow-[#D4AF37]/20',
+              )}
+            >
+              {saving ? (
+                <div className="h-4 w-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {saving ? 'Criando...' : 'Criar Lead'}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// ========================================
 // KANBAN BOARD (MAIN EXPORT)
 // ========================================
 
@@ -328,21 +693,12 @@ export default function KanbanBoard({ corretorId }: { corretorId: string }) {
     selectedCard,
     drawerOpen,
     handleMoveCard,
-    handleAddCard,
     openDrawer,
     closeDrawer,
     fetchBoard,
   } = useKanban(corretorId);
 
   const [addingTo, setAddingTo] = useState<KanbanColumnSlug | null>(null);
-  const [newCardTitle, setNewCardTitle] = useState('');
-
-  const handleQuickAdd = useCallback(async () => {
-    if (!newCardTitle.trim() || !addingTo) return;
-    await handleAddCard(newCardTitle.trim(), addingTo);
-    setNewCardTitle('');
-    setAddingTo(null);
-  }, [newCardTitle, addingTo, handleAddCard]);
 
   if (loading) {
     return (
@@ -385,40 +741,6 @@ export default function KanbanBoard({ corretorId }: { corretorId: string }) {
         </button>
       </div>
 
-      {/* Quick Add Modal */}
-      <AnimatePresence>
-        {addingTo && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl"
-          >
-            <input
-              type="text"
-              placeholder="Nome do lead..."
-              value={newCardTitle}
-              onChange={(e) => setNewCardTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleQuickAdd()}
-              autoFocus
-              className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 outline-none"
-            />
-            <button
-              onClick={handleQuickAdd}
-              className="px-4 py-2 rounded-lg bg-[#D4AF37] text-black text-sm font-medium hover:bg-[#F6E05E] transition-colors"
-            >
-              Adicionar
-            </button>
-            <button
-              onClick={() => { setAddingTo(null); setNewCardTitle(''); }}
-              className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 text-sm transition-colors"
-            >
-              Cancelar
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Kanban Columns */}
       <div className="flex gap-4 overflow-x-auto pb-4">
         {columns.map((slug) => (
@@ -434,6 +756,19 @@ export default function KanbanBoard({ corretorId }: { corretorId: string }) {
           />
         ))}
       </div>
+
+      {/* Modal de Criação Completo */}
+      <AnimatePresence>
+        {addingTo && (
+          <NewLeadModal
+            isOpen={!!addingTo}
+            onClose={() => setAddingTo(null)}
+            corretorId={corretorId}
+            colunaSlug={addingTo}
+            onSuccess={fetchBoard}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Drawer CRM Hubspot-style */}
       <LeadDrawer
