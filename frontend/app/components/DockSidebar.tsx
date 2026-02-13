@@ -124,6 +124,7 @@ const sidebarItems: SidebarItem[] = [
     icon: TrendingUp,
     children: [
       { id: "analytics-ga4", label: "Google Analytics", icon: TrendingUp, href: `${P}/analytics`, badge: { text: "GA4", variant: "danger" } },
+      { id: "analytics-dashboard-vendas", label: "Dashboard Vendas", icon: DollarSign, href: `${P}/dashboard-vendas`, badge: { text: "NOVO", variant: "gold" } },
       { id: "analytics-metricas", label: "Métricas & KPIs", icon: LineChart, href: `${P}/metricas`, badge: { text: "NOVO", variant: "gold" } },
       { id: "analytics-performance", label: "Performance", icon: Award, href: `${P}/performance` },
       { id: "analytics-relatorios", label: "Relatórios", icon: BarChart3, href: `${P}/relatorios` },
@@ -137,6 +138,7 @@ const sidebarItems: SidebarItem[] = [
       { id: "cockpit-principal", label: "Painel de Controle", icon: Gauge, href: `${P}/cockpit` },
       { id: "cockpit-campanhas", label: "Campanhas", icon: Crosshair, href: `${P}/cockpit/campanhas` },
       { id: "cockpit-consolidado", label: "Consolidado", icon: BarChart3, href: `${P}/cockpit/consolidado`, badge: { text: "NOVO", variant: "danger" } },
+      { id: "cockpit-connect", label: "Conectar Plataformas", icon: Link2, href: `${P}/cockpit/consolidado/connect` },
     ],
   },
 
@@ -155,20 +157,19 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
 
-  // ── IA & INTELIGÊNCIA ──
+  // ── AI PERFORMANCE ──
   {
-    id: "ia-hub",
-    label: "Inteligência IA",
+    id: "ai-performance",
+    label: "AI Performance",
     icon: BrainCircuit,
     color: "gold",
     children: [
-      { id: "ia-dashboard", label: "Dashboard IA", icon: Gauge, href: `${P}/ai-performance/dashboard-ia` },
-      { id: "ia-insights", label: "Insights Preditivos", icon: Lightbulb, href: `${P}/insights`, badge: { text: "Beta", variant: "warning" } },
-      { id: "ia-scanner", label: "Scanner PDF", icon: ScanLine, href: `${P}/scanner`, badge: { text: "IA", variant: "gold" } },
-      { id: "ia-regras", label: "Regras de IA", icon: Brain, href: `${P}/regras-ia` },
-      { id: "ia-escala", label: "Escala Automática", icon: Scale, href: `${P}/ai-performance/escala-automatica` },
-      { id: "ia-alertas", label: "Regras de Alerta", icon: ShieldAlert, href: `${P}/ai-performance/regras-alerta` },
-      { id: "ia-publicos", label: "Públicos IA", icon: UsersRound, href: `${P}/ai-performance/publicos` },
+      { id: "ai-dashboard", label: "Dashboard IA", icon: Gauge, href: `${P}/ai-performance`, badge: { text: "5 Camadas", variant: "gold" } },
+      { id: "ai-escala", label: "Escala Automática", icon: Scale, href: `${P}/ai-performance/escala-automatica` },
+      { id: "ai-audiences", label: "Públicos IA", icon: UsersRound, href: `${P}/ai-performance/audiences` },
+      { id: "ai-rules", label: "Regras & Alertas", icon: ShieldAlert, href: `${P}/ai-performance/rules` },
+      { id: "ai-settings", label: "Configurações", icon: Settings, href: `${P}/ai-performance/settings` },
+      { id: "ai-scanner", label: "Scanner PDF", icon: ScanLine, href: `${P}/scanner`, badge: { text: "IA", variant: "gold" } },
     ],
   },
 

@@ -20,6 +20,10 @@
     {
       "path": "/api/social-flow/cron?job=sync",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/audit-campaigns",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

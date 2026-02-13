@@ -1,4 +1,6 @@
 import { Resend } from 'resend';
+import type { SendEmailOptions, SendEmailResult } from '@/lib/types/email';
+import { logEmailToDb, updateEmailLog, injectTrackingPixel } from '@/lib/email-tracking';
 
 // Lazy initialization para evitar erro durante build (env vars não disponíveis em build time)
 let _resend: Resend | null = null;
@@ -830,3 +832,277 @@ export async function enviarEmailConviteCorretor(dados: {
     return { success: false, error: msg || 'Erro inesperado' };
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// BLUEPRINT 14: Central transactional email sender with
+// DB logging, tracking pixel injection, and Resend integration.
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Central function to send any email with full tracking.
+ * Logs to email_logs table, injects tracking pixel, sends via Resend.
+ */
+export async function sendTransactionalEmail(options: SendEmailOptions): Promise<SendEmailResult> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log('[email] RESEND_API_KEY não configurada, pulando envio');
+      return { success: false, error: 'API key não configurada' };
+    }
+
+    const to = Array.isArray(options.to) ? options.to : [options.to];
+
+    // 1. Pre-log to DB (status: queued) to get the log ID for tracking pixel
+    const logId = await logEmailToDb({
+      ...options,
+      status: 'queued',
+      saveHtmlContent: options.saveHtmlContent !== false,
+    });
+
+    // 2. Inject tracking pixel if we have a log ID
+    let finalHtml = options.html;
+    if (logId && options.injectTrackingPixel !== false) {
+      finalHtml = injectTrackingPixel(finalHtml, logId);
+    }
+
+    // 3. Send via Resend
+    const { data, error } = await getResend().emails.send({
+      from: options.from || FROM_EMAIL,
+      to,
+      cc: options.cc,
+      bcc: options.bcc,
+      replyTo: options.replyTo,
+      subject: options.subject,
+      html: finalHtml,
+      text: options.text,
+    });
+
+    if (error) {
+      console.error('[email] Resend error:', error);
+      // Update DB log with failure
+      if (logId) {
+        await updateEmailLog(logId, {
+          status: 'failed',
+          error_message: error.message,
+          failed_at: new Date().toISOString(),
+        });
+      }
+      return { success: false, error: error.message, logId: logId || undefined };
+    }
+
+    // 4. Update DB log with Resend ID
+    if (logId && data?.id) {
+      await updateEmailLog(logId, {
+        resend_id: data.id,
+        status: 'sent',
+        html_content: options.saveHtmlContent !== false ? finalHtml : undefined,
+      });
+    }
+
+    console.log('[email] Sent:', options.subject, '→', to.join(', '), data?.id);
+    return { success: true, id: data?.id, logId: logId || undefined };
+  } catch (err) {
+    console.error('[email] Unexpected error in sendTransactionalEmail:', err);
+    return { success: false, error: 'Erro inesperado ao enviar e-mail' };
+  }
+}
+
+// ─── Email: Boas-vindas (Welcome) ───────────────────────────
+export async function sendWelcomeEmail(dados: {
+  nome: string;
+  email: string;
+}): Promise<SendEmailResult> {
+  const content = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:56px;height:56px;background-color:#D4AF3720;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">
+        <span style="font-size:28px;">👋</span>
+      </div>
+    </div>
+    
+    <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
+      Bem-vindo(a), ${dados.nome.split(' ')[0]}!
+    </h2>
+    <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
+      Estamos felizes em ter você conosco. A <strong style="color:#D4AF37;">Humano Saúde</strong> está pronta para ajudá-lo a encontrar o plano de saúde ideal.
+    </p>
+    
+    <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
+      <h3 style="color:#D4AF37;font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;" class="dm-label">
+        🎯 O que você pode fazer agora
+      </h3>
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td style="padding:6px 0;color:#4B5563;font-size:14px;" class="dm-text">✅ Comparar planos de saúde com economia real</td></tr>
+        <tr><td style="padding:6px 0;color:#4B5563;font-size:14px;" class="dm-text">✅ Fazer uma cotação online em poucos minutos</td></tr>
+        <tr><td style="padding:6px 0;color:#4B5563;font-size:14px;" class="dm-text">✅ Falar com um especialista via WhatsApp</td></tr>
+      </table>
+    </div>
+    
+    <div style="text-align:center;margin-bottom:16px;">
+      <a href="${BASE_URL}/economizar" 
+         style="display:inline-block;background-color:#D4AF37;color:#FFFFFF;padding:14px 36px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+        Ver Planos com Desconto →
+      </a>
+    </div>
+    
+    <p style="color:#9CA3AF;font-size:12px;text-align:center;margin:0;" class="dm-muted">
+      Em caso de dúvidas, responda este e-mail ou escreva para
+      <a href="mailto:comercial@humanosaude.com.br" style="color:#D4AF37;text-decoration:none;">comercial@humanosaude.com.br</a>
+    </p>
+  `;
+
+  return sendTransactionalEmail({
+    to: dados.email,
+    subject: 'Bem-vindo(a) à Humano Saúde! 👋',
+    html: emailLayout(content, true),
+    templateName: 'welcome',
+    emailType: 'transactional',
+    category: 'onboarding',
+    tags: ['welcome', 'new-user'],
+    triggeredBy: 'system',
+  });
+}
+
+// ─── Email: Confirmação de compra ────────────────────────────
+export async function sendPurchaseConfirmationEmail(dados: {
+  nome: string;
+  email: string;
+  plano: string;
+  operadora: string;
+  valor: string;
+  vigencia: string;
+  protocolo: string;
+}): Promise<SendEmailResult> {
+  const content = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:56px;height:56px;background-color:#DCFCE7;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">
+        <span style="font-size:28px;">🎉</span>
+      </div>
+    </div>
+    
+    <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
+      Compra confirmada!
+    </h2>
+    <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
+      Parabéns, ${dados.nome.split(' ')[0]}! Seu plano de saúde foi contratado com sucesso.
+    </p>
+    
+    <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:24px;" class="dm-box">
+      <h3 style="color:#D4AF37;font-size:14px;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;" class="dm-label">
+        📋 Detalhes do plano
+      </h3>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:13px;width:130px;font-weight:600;" class="dm-muted dm-border">Protocolo</td>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;color:#111827;font-size:14px;font-weight:700;" class="dm-heading dm-border">
+            <code style="background-color:#E5E7EB;padding:3px 8px;border-radius:4px;font-family:monospace;" class="dm-code">${dados.protocolo}</code>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:13px;font-weight:600;" class="dm-muted dm-border">Operadora</td>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;color:#111827;font-size:14px;font-weight:600;" class="dm-heading dm-border">${dados.operadora}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:13px;font-weight:600;" class="dm-muted dm-border">Plano</td>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;color:#374151;font-size:14px;" class="dm-text dm-border">${dados.plano}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:13px;font-weight:600;" class="dm-muted dm-border">Valor</td>
+          <td style="padding:8px 0;border-bottom:1px solid #E5E7EB;" class="dm-border">
+            <span style="color:#16A34A;font-size:18px;font-weight:800;">R$ ${dados.valor}</span><span style="color:#9CA3AF;font-size:12px;">/mês</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#6B7280;font-size:13px;font-weight:600;" class="dm-muted">Vigência</td>
+          <td style="padding:8px 0;color:#374151;font-size:14px;" class="dm-text">${dados.vigencia}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div style="background-color:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:16px;margin-bottom:24px;" class="dm-card">
+      <p style="color:#92400E;font-size:13px;margin:0;line-height:1.5;" class="dm-muted">
+        <strong>📌 Importante:</strong> Guarde o número do protocolo para acompanhar o andamento da sua proposta.
+        Sua carência será contada a partir da data de vigência.
+      </p>
+    </div>
+    
+    <p style="color:#9CA3AF;font-size:12px;text-align:center;margin:0;" class="dm-muted">
+      Em caso de dúvidas, entre em contato:
+      <a href="mailto:comercial@humanosaude.com.br" style="color:#D4AF37;text-decoration:none;font-weight:600;">comercial@humanosaude.com.br</a>
+    </p>
+  `;
+
+  return sendTransactionalEmail({
+    to: dados.email,
+    subject: `Compra confirmada — ${dados.plano} — Humano Saúde`,
+    html: emailLayout(content, true),
+    templateName: 'purchase_confirmation',
+    emailType: 'transactional',
+    category: 'vendas',
+    tags: ['purchase', 'confirmation', dados.operadora.toLowerCase()],
+    triggeredBy: 'system',
+    metadata: { protocolo: dados.protocolo, plano: dados.plano, operadora: dados.operadora },
+  });
+}
+
+// ─── Email: PIX pendente ─────────────────────────────────────
+export async function sendPixPendingEmail(dados: {
+  nome: string;
+  email: string;
+  valor: string;
+  pixCode: string;
+  expiresAt: string;
+}): Promise<SendEmailResult> {
+  const content = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:56px;height:56px;background-color:#D4AF3720;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">
+        <span style="font-size:28px;">💰</span>
+      </div>
+    </div>
+    
+    <h2 style="color:#111827;font-size:22px;text-align:center;margin:0 0 8px;font-weight:700;" class="dm-heading">
+      Pagamento via PIX pendente
+    </h2>
+    <p style="color:#4B5563;font-size:15px;text-align:center;line-height:1.6;margin:0 0 24px;" class="dm-text">
+      Olá, ${dados.nome.split(' ')[0]}! Seu pagamento via PIX está aguardando confirmação.
+    </p>
+    
+    <div style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:24px;text-align:center;" class="dm-box">
+      <p style="color:#6B7280;font-size:13px;margin:0 0 8px;text-transform:uppercase;font-weight:600;" class="dm-muted">Valor a pagar</p>
+      <p style="color:#16A34A;font-size:32px;font-weight:800;margin:0 0 16px;">R$ ${dados.valor}</p>
+      
+      <p style="color:#6B7280;font-size:12px;margin:0 0 8px;text-transform:uppercase;font-weight:600;" class="dm-muted">Código PIX (Copia e Cola)</p>
+      <div style="background-color:#E5E7EB;border-radius:8px;padding:12px;margin-bottom:12px;word-break:break-all;" class="dm-code">
+        <code style="font-family:monospace;font-size:12px;color:#111827;line-height:1.4;">${dados.pixCode}</code>
+      </div>
+      
+      <p style="color:#EF4444;font-size:13px;margin:0;font-weight:600;">
+        ⏰ Expira em: ${dados.expiresAt}
+      </p>
+    </div>
+    
+    <div style="background-color:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:16px;margin-bottom:24px;" class="dm-card">
+      <p style="color:#991B1B;font-size:13px;margin:0;line-height:1.5;" class="dm-muted">
+        <strong>⚠️ Atenção:</strong> O código PIX tem validade limitada. Após o vencimento, será necessário gerar um novo código.
+      </p>
+    </div>
+    
+    <p style="color:#9CA3AF;font-size:12px;text-align:center;margin:0;" class="dm-muted">
+      Dúvidas sobre o pagamento? Entre em contato:
+      <a href="mailto:comercial@humanosaude.com.br" style="color:#D4AF37;text-decoration:none;font-weight:600;">comercial@humanosaude.com.br</a>
+    </p>
+  `;
+
+  return sendTransactionalEmail({
+    to: dados.email,
+    subject: `PIX pendente — R$ ${dados.valor} — Humano Saúde`,
+    html: emailLayout(content, true),
+    templateName: 'pix_pending',
+    emailType: 'transactional',
+    category: 'financeiro',
+    tags: ['pix', 'payment', 'pending'],
+    triggeredBy: 'system',
+    metadata: { valor: dados.valor },
+  });
+}
+
+// ─── Re-export getResend for admin resend route ──────────────
+export { getResend as _getResend };
