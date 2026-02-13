@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabase = createServiceClient();
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +31,7 @@ export async function POST(req: NextRequest) {
       .upload(path, buffer, { contentType: file.type, upsert: true });
 
     if (uploadError) {
-      console.error('[Banner] Upload error:', uploadError.message);
+      logger.error('[Banner] Upload error:', uploadError.message);
       return NextResponse.json({ error: 'Falha no upload do banner' }, { status: 500 });
     }
 
@@ -64,7 +62,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[Banner] Error:', msg);
+    logger.error('[Banner] Error:', msg);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

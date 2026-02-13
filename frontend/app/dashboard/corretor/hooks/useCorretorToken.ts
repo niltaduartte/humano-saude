@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { decodeTokenUnsafe } from '@/lib/auth-jwt';
 
 interface TokenPayload {
-  id: string;
+  id?: string;
+  corretor_id?: string;
   email: string;
   role: string;
-  exp: number;
+  exp?: number;
 }
 
 function getCookie(name: string): string | null {
@@ -15,17 +17,24 @@ function getCookie(name: string): string | null {
   return match ? match[2] : null;
 }
 
+/**
+ * Decodifica token JWT no client-side.
+ * Sem verificação de assinatura — middleware já validou.
+ */
 function decodeToken(token: string): TokenPayload | null {
-  try {
-    const json = atob(token);
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
+  const payload = decodeTokenUnsafe(token);
+  if (!payload) return null;
+  return {
+    id: payload.corretor_id,
+    corretor_id: payload.corretor_id,
+    email: payload.email,
+    role: payload.role,
+    exp: payload.exp,
+  };
 }
 
 /**
- * Hook para extrair o corretor_id do cookie base64 token.
+ * Hook para extrair o corretor_id do cookie token.
  * Retorna o UUID do corretor (não o token bruto).
  */
 export function useCorretorId(): string {
@@ -36,8 +45,8 @@ export function useCorretorId(): string {
     if (!token) return;
 
     const decoded = decodeToken(token);
-    if (decoded?.id) {
-      setCorretorId(decoded.id);
+    if (decoded?.corretor_id) {
+      setCorretorId(decoded.corretor_id);
     }
   }, []);
 
@@ -45,24 +54,31 @@ export function useCorretorId(): string {
 }
 
 /**
- * Decode token no lado do servidor (server component).
- * Usa Buffer.from em vez de atob.
+ * Decode token JWT no lado do servidor (server component).
  */
 export function decodeCorretorTokenServer(token: string): TokenPayload | null {
   try {
-    const json = Buffer.from(token, 'base64').toString('utf-8');
-    return JSON.parse(json);
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
+    return {
+      id: payload.corretor_id,
+      corretor_id: payload.corretor_id,
+      email: payload.email,
+      role: payload.role,
+      exp: payload.exp,
+    };
   } catch {
     return null;
   }
 }
 
 /**
- * Decode token no lado do cliente (browser).
+ * Extrai corretor_id do cookie no client-side (browser).
  */
 export function getCorretorIdFromCookie(): string {
   const token = getCookie('corretor_token');
   if (!token) return '';
   const decoded = decodeToken(token);
-  return decoded?.id ?? '';
+  return decoded?.corretor_id || '';
 }

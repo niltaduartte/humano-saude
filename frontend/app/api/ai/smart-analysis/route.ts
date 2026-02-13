@@ -8,6 +8,7 @@ import { generateFullAnalysis } from '@/lib/smart-analyzer';
 import { getMarketingInsights } from '@/lib/meta-marketing';
 import { getGatewaySales } from '@/lib/analytics-hub/internal/data-connector';
 import type { CampaignData, AdSetData, AdData, PerformancePeriod } from '@/lib/types/ai-performance';
+import { logger } from '@/lib/logger';
 
 const cache = new Map<string, { data: unknown; expiry: number }>();
 const CACHE_TTL = 15 * 60 * 1000;
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: analysis });
   } catch (error) {
-    console.error('❌ Smart Analysis Error:', error);
+    logger.error('❌ Smart Analysis Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

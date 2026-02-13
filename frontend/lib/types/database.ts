@@ -108,6 +108,21 @@ export type InsuranceLead = {
   historico: LeadHistoricoEntry[];
   atribuido_a: string | null;
   arquivado: boolean;
+  // ── Campos unificados da landing page (Fase 2.1) ──
+  telefone: string | null;
+  perfil: string | null;
+  acomodacao: string | null;
+  idades_beneficiarios: string[] | null;
+  bairro: string | null;
+  top_3_planos: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  cnpj: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
 };
 
 export type InsuranceLeadInsert = Omit<InsuranceLead, 'id' | 'created_at' | 'updated_at'>;

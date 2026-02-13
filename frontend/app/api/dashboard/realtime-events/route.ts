@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { fetchRealtimeEvents } from '@/lib/dashboard-queries';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -14,7 +15,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: events });
   } catch (error) {
-    console.error('❌ Realtime Events Error:', error);
+    logger.error('❌ Realtime Events Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

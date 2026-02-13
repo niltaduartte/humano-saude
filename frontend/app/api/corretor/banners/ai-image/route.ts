@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { logger } from '@/lib/logger';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
@@ -117,7 +118,7 @@ Gere a imagem ajustada agora.`;
           contentParts.push({ text: `Ajuste solicitado: "${refinementPrompt}".${attachmentBase64 ? ' Use a terceira imagem anexada conforme a instrução.' : ''} Aplique na segunda imagem (o banner gerado) mantendo a estrutura.` });
         }
 
-        console.log(`[AI Image] ${isRefinement ? 'Refinando' : 'Gerando'} com modelo: ${modelName}`);
+        logger.info(`[AI Image] ${isRefinement ? 'Refinando' : 'Gerando'} com modelo: ${modelName}`);
 
         const result = await model.generateContent(contentParts);
 
@@ -144,7 +145,7 @@ Gere a imagem ajustada agora.`;
         }
         /* Se não gerou imagem, tenta próximo modelo */
       } catch (modelErr) {
-        console.warn(`[AI Image] Model ${modelName} failed:`, modelErr instanceof Error ? modelErr.message : modelErr);
+        logger.warn(`[AI Image] Model ${modelName} failed`, { error: modelErr instanceof Error ? modelErr.message : String(modelErr) });
         continue; /* tenta próximo modelo */
       }
     }
@@ -156,7 +157,7 @@ Gere a imagem ajustada agora.`;
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[AI Image Gen] Error:', msg);
+    logger.error('[AI Image Gen] Error:', msg);
     return NextResponse.json({ error: `Erro ao gerar imagem com IA: ${msg}` }, { status: 500 });
   }
 }

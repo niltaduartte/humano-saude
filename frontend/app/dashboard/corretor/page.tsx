@@ -2,19 +2,11 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import DashboardOverview from './components/DashboardOverview';
 import { getCorretorById } from '@/app/actions/corretor-ops';
+import { verifyToken } from '@/lib/auth-jwt';
 
 export const metadata = {
   title: 'Dashboard | Corretor Humano Saúde',
 };
-
-function decodeToken(token: string): { id: string; email: string; role: string; exp: number } | null {
-  try {
-    const json = Buffer.from(token, 'base64').toString('utf-8');
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
 
 export default async function CorretorDashboardPage() {
   const cookieStore = await cookies();
@@ -24,19 +16,20 @@ export default async function CorretorDashboardPage() {
     redirect('/dashboard/corretor/login');
   }
 
-  const decoded = decodeToken(token);
+  const jwt = await verifyToken(token);
+  const corretorId = jwt?.corretor_id;
 
-  if (!decoded || !decoded.id || (decoded.exp && decoded.exp < Date.now())) {
+  if (!corretorId) {
     redirect('/dashboard/corretor/login');
   }
 
-  const result = await getCorretorById(decoded.id);
+  const result = await getCorretorById(corretorId);
 
   if (!result.success || !result.data) {
     redirect('/dashboard/corretor/login');
   }
 
-  const corretorId = String(result.data.id ?? '');
+  const dbCorretorId = String(result.data.id ?? '');
   const nomeCompleto = String(result.data.nome ?? 'Corretor');
 
   return (
@@ -49,7 +42,7 @@ export default async function CorretorDashboardPage() {
           Painel Operacional · {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
-      <DashboardOverview corretorId={corretorId} />
+      <DashboardOverview corretorId={dbCorretorId} />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 import type { TarefaInsert, TarefaUpdate, TarefaStatus } from '@/lib/types/database';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -33,7 +34,7 @@ export async function getTarefas(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar tarefas:', error);
+      logger.error('❌ Erro ao buscar tarefas:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -57,7 +58,7 @@ export async function createTarefa(input: TarefaInsert) {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao criar tarefa:', error);
+      logger.error('❌ Erro ao criar tarefa:', error);
       return { success: false, data: null, error: error.message };
     }
 

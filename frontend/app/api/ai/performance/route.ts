@@ -8,6 +8,7 @@ import { runFullAIAnalysis, runQuickAnalysis, runLocalAnalysis, chatWithAI } fro
 import { getMarketingInsights } from '@/lib/meta-marketing';
 import { getGatewaySales } from '@/lib/analytics-hub/internal/data-connector';
 import type { PerformanceData, CampaignData, PerformancePeriod } from '@/lib/types/ai-performance';
+import { logger } from '@/lib/logger';
 
 // Cache em memória (10 min)
 const analysisCache = new Map<string, { data: unknown; expiry: number }>();
@@ -137,7 +138,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('❌ AI Performance Error:', error);
+    logger.error('❌ AI Performance Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
@@ -182,7 +183,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { response } });
   } catch (error) {
-    console.error('❌ AI Chat Error:', error);
+    logger.error('❌ AI Chat Error:', error);
     return NextResponse.json(
       { success: false, error: 'Erro ao processar mensagem' },
       { status: 500 }

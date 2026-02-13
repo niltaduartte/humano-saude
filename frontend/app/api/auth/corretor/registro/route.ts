@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { enviarEmailConfirmacaoCadastro, enviarEmailNotificacaoAdmin } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 // ─── Validadores Server-Side ───────────────────────────────
 function validarCPF(cpf: string): boolean {
@@ -58,7 +59,7 @@ async function ensureTableExists(supabase: ReturnType<typeof createServiceClient
     // Criar a tabela via SQL (usando rpc ou raw query)
     // Como não temos acesso direto a SQL via Supabase JS,
     // vamos usar a função rpc se disponível, senão retornamos erro claro
-    console.error('[registro corretor] Tabela solicitacoes_corretor não encontrada. Execute a migration SQL no Supabase.');
+    logger.error('[registro corretor] Tabela solicitacoes_corretor não encontrada. Execute a migration SQL no Supabase.');
 
     // Tentar criar via rpc (caso exista a função)
     const createResult = await supabase.rpc('exec_sql', {
@@ -99,7 +100,7 @@ async function ensureTableExists(supabase: ReturnType<typeof createServiceClient
     });
 
     if (createResult.error) {
-      console.log('[registro corretor] Não foi possível criar tabela via rpc, tentando insert direto...');
+      logger.info('[registro corretor] Não foi possível criar tabela via rpc, tentando insert direto...');
       // A função rpc não existe — vamos retornar false
       return false;
     }
@@ -317,11 +318,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[registro corretor]', error);
+      logger.error('[registro corretor]', error);
 
       // Se o erro é por colunas que não existem, tentar insert mínimo
       if (error.code === 'PGRST204' || error.message?.includes('column')) {
-        console.log('[registro corretor] Tentando insert com colunas base...');
+        logger.info('[registro corretor] Tentando insert com colunas base...');
 
         const minimalInsert: Record<string, unknown> = {
           nome_completo: nome_completo.trim(),
@@ -345,7 +346,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (error2) {
-          console.error('[registro corretor] fallback insert failed', error2);
+          logger.error('[registro corretor] fallback insert failed', error2);
           return NextResponse.json(
             { error: `Erro ao salvar solicitação: ${error2.message}` },
             { status: 500 },
@@ -428,12 +429,12 @@ export async function POST(request: NextRequest) {
             .insert(aceites);
 
           if (aceiteError) {
-            console.error('[termos aceite]', aceiteError);
+            logger.error('[termos aceite]', aceiteError);
           }
         }
       }
     } catch (termosErr) {
-      console.error('[termos aceite] non-critical error:', termosErr);
+      logger.error('[termos aceite] non-critical error:', termosErr);
     }
 
     // ─── Enviar e-mails (non-blocking) ───────────────────────
@@ -459,7 +460,7 @@ export async function POST(request: NextRequest) {
         modalidade: modalidade_trabalho || 'digital',
       });
     } catch (emailErr) {
-      console.error('[email] non-critical error:', emailErr);
+      logger.error('[email] non-critical error:', emailErr);
     }
 
     return NextResponse.json({
@@ -468,7 +469,7 @@ export async function POST(request: NextRequest) {
       id: data.id,
     });
   } catch (err) {
-    console.error('[registro corretor] unexpected', err);
+    logger.error('[registro corretor] unexpected', err);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 },

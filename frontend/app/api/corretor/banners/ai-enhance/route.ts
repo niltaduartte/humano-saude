@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { logger } from '@/lib/logger';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
@@ -83,7 +84,7 @@ Regras de copywriting Meta Andromeda:
     return NextResponse.json({ success: true, enhanced: parsed });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[AI Enhance] Error:', msg);
+    logger.error('[AI Enhance] Error:', msg);
     return NextResponse.json({ error: 'Erro ao analisar com IA' }, { status: 500 });
   }
 }

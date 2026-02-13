@@ -15,6 +15,7 @@ import type {
   ParsedUserAgent,
   DeviceType,
 } from '@/lib/types/email';
+import { logger } from '@/lib/logger';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://humanosaude.com.br';
 
@@ -67,13 +68,13 @@ export async function logEmailToDb(
       .single();
 
     if (error) {
-      console.error('[email-tracking] Failed to log email:', error.message);
+      logger.error('[email-tracking] Failed to log email:', error.message);
       return null;
     }
 
     return data?.id || null;
   } catch (err) {
-    console.error('[email-tracking] Unexpected error logging email:', err);
+    logger.error('[email-tracking] Unexpected error logging email:', err);
     return null;
   }
 }
@@ -90,7 +91,7 @@ export async function updateEmailLog(
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', logId);
   } catch (err) {
-    console.error('[email-tracking] Failed to update email log:', err);
+    logger.error('[email-tracking] Failed to update email log:', err);
   }
 }
 
@@ -131,7 +132,7 @@ export async function recordEmailEvent(event: {
     // Update parent email_log status/counters
     await updateEmailLogFromEvent(event.emailLogId, event.eventType, event.bounceType);
   } catch (err) {
-    console.error('[email-tracking] Failed to record event:', err);
+    logger.error('[email-tracking] Failed to record event:', err);
   }
 }
 
@@ -200,7 +201,7 @@ async function updateEmailLogFromEvent(
 
     await supabase.from('email_logs').update(updates).eq('id', emailLogId);
   } catch (err) {
-    console.error('[email-tracking] Failed to update log from event:', err);
+    logger.error('[email-tracking] Failed to update log from event:', err);
   }
 }
 
@@ -214,13 +215,13 @@ export async function getEmailStats(): Promise<EmailStats | null> {
       .single();
 
     if (error) {
-      console.error('[email-tracking] Failed to get stats:', error.message);
+      logger.error('[email-tracking] Failed to get stats:', error.message);
       return null;
     }
 
     return data as EmailStats;
   } catch (err) {
-    console.error('[email-tracking] Unexpected error getting stats:', err);
+    logger.error('[email-tracking] Unexpected error getting stats:', err);
     return null;
   }
 }
@@ -265,7 +266,7 @@ export async function listEmails(params: ListEmailsParams): Promise<ListEmailsRe
   const { data, error, count } = await query;
 
   if (error) {
-    console.error('[email-tracking] Failed to list emails:', error.message);
+    logger.error('[email-tracking] Failed to list emails:', error.message);
     return { emails: [], total: 0, page, limit, totalPages: 0 };
   }
 

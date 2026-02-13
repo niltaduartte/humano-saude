@@ -26,8 +26,7 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Salvar token no localStorage/cookie
-        localStorage.setItem('admin_token', data.token);
+        // Cookie httpOnly já foi setado pelo servidor
         router.push('/portal-interno-hks-2026');
       } else {
         setError(data.message || 'Credenciais inválidas');

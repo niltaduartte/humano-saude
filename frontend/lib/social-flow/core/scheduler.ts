@@ -5,6 +5,7 @@
 
 import { createClient } from "@supabase/supabase-js"
 import type { SocialPost, ScheduleResult } from "../types"
+import { logger } from '@/lib/logger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,7 +54,7 @@ export class SchedulerService {
       .limit(50)
 
     if (error) {
-      console.error("[SchedulerService] Erro ao buscar posts agendados:", error)
+      logger.error("[SchedulerService] Erro ao buscar posts agendados:", error)
       return []
     }
 

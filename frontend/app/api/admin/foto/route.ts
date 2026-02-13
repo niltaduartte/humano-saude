@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 // ─── POST: Upload de foto do admin ─────────────────────────
 export async function POST(request: NextRequest) {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error('[admin foto upload]', uploadError);
+      logger.error('[admin foto upload]', uploadError);
       return NextResponse.json({ error: 'Erro ao fazer upload' }, { status: 500 });
     }
 
@@ -76,13 +77,13 @@ export async function POST(request: NextRequest) {
       );
 
     if (updateError) {
-      console.error('[admin foto update]', updateError);
+      logger.error('[admin foto update]', updateError);
       return NextResponse.json({ error: 'Erro ao salvar URL da foto' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, foto_url: fotoUrl });
   } catch (err) {
-    console.error('[admin foto POST]', err);
+    logger.error('[admin foto POST]', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
@@ -115,13 +116,13 @@ export async function DELETE() {
       );
 
     if (error) {
-      console.error('[admin foto delete]', error);
+      logger.error('[admin foto delete]', error);
       return NextResponse.json({ error: 'Erro ao remover foto' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('[admin foto DELETE]', err);
+    logger.error('[admin foto DELETE]', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

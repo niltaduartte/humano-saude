@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,13 +24,13 @@ export async function POST(request: NextRequest) {
       .eq('session_id', sessionId);
 
     if (error) {
-      console.error('❌ Offline update error:', error);
+      logger.error('❌ Offline update error:', error);
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('❌ Analytics Offline Error:', error);
+    logger.error('❌ Analytics Offline Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

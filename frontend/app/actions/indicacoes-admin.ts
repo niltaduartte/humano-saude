@@ -1,6 +1,7 @@
 'use server';
 
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 // ============================================
 // TYPES
@@ -264,7 +265,7 @@ export async function getIndicacoesOverview(): Promise<{
       },
     };
   } catch (error: any) {
-    console.error('❌ Erro ao buscar indicações:', error);
+    logger.error('❌ Erro ao buscar indicações:', error);
     return { success: false, data: null, error: error?.message };
   }
 }

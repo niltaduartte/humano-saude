@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getRealtimeDetailed, isGA4Available } from '@/lib/google-analytics';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -21,7 +22,7 @@ export async function GET() {
       data: data || { activeUsers: 0, cities: [], devices: [], countries: [] },
     });
   } catch (error) {
-    console.error('❌ GA4 Realtime Detailed Error:', error);
+    logger.error('❌ GA4 Realtime Detailed Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

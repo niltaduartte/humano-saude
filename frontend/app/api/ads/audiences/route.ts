@@ -14,6 +14,7 @@ import {
   getTemplatesByFunnel,
 } from '@/lib/meta-audiences';
 import { isMetaConfigured } from '@/lib/ads/meta-client';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       total: audiences.length,
     });
   } catch (error) {
-    console.error('❌ Erro ao listar audiences:', error);
+    logger.error('❌ Erro ao listar audiences:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ success: true, audience: result });
   } catch (error) {
-    console.error('❌ Erro ao criar audience:', error);
+    logger.error('❌ Erro ao criar audience:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

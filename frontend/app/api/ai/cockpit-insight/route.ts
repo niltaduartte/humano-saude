@@ -9,6 +9,7 @@ import { generateSmartAnalysis } from '@/lib/smart-analyzer';
 import { getMarketingInsights } from '@/lib/meta-marketing';
 import type { PerformancePeriod, CampaignData, SmartAnalysisResult } from '@/lib/types/ai-performance';
 import { DEFAULT_BENCHMARKS, formatCurrency, formatRoas } from '@/lib/consolidator';
+import { logger } from '@/lib/logger';
 
 // Cache 10 min
 let cockpitCache: { data: unknown; ts: number; period: string } | null = null;
@@ -74,7 +75,7 @@ Mantenha o tom profissional e direto. Máximo 300 palavras.`;
     const data = await response.json();
     return data.choices?.[0]?.message?.content || null;
   } catch (error) {
-    console.error('❌ GPT Insight Error:', error);
+    logger.error('❌ GPT Insight Error:', error);
     return null;
   }
 }
@@ -137,7 +138,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('❌ Cockpit Insight Error:', error);
+    logger.error('❌ Cockpit Insight Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

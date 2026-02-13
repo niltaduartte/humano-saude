@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { enviarEmailAprovacao } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
       onboardingToken,
     });
   } catch (err) {
-    console.error('[reenviar-notificacao]', err);
+    logger.error('[reenviar-notificacao]', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

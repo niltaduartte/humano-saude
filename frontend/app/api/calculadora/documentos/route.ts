@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export const maxDuration = 30;
-
-// Supabase com service role para upload público
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  if (!url || !key) throw new Error('Supabase não configurado');
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado' }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = createServiceClient();
     const timestamp = Date.now();
     const idFolder = leadId || telefone?.replace(/\D/g, '') || `anonimo_${timestamp}`;
     const uploadResults: { docId: string; url: string; nome: string }[] = [];
@@ -55,7 +46,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (uploadError) {
-        console.error(`[Docs] Erro upload ${docId}:`, uploadError);
+        logger.error(`[Docs] Erro upload ${docId}:`, uploadError);
         continue;
       }
 
@@ -108,7 +99,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(
+    logger.info(
       `[Docs] ✅ ${uploadResults.length} documento(s) enviado(s) para lead ${idFolder} | nome: ${nome}`,
     );
 
@@ -119,7 +110,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erro interno';
-    console.error('[Docs] ❌ Erro:', msg);
+    logger.error('[Docs] ❌ Erro:', msg);
     return NextResponse.json({ error: 'Erro ao enviar documentos.' }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 const PYTHON_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('❌ Erro no proxy PDF:', error);
+    logger.error('❌ Erro no proxy PDF:', error);
     return NextResponse.json(
       { error: 'Erro interno ao processar PDF' },
       { status: 500 }

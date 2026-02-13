@@ -7,6 +7,7 @@
 import OpenAI from 'openai';
 import type { FunnelStage, CopyAngle, PromptGeneratorResult } from './types';
 import { HUMANO_SAUDE_KNOWLEDGE } from '../humano-saude-knowledge';
+import { logger } from '@/lib/logger';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
 
@@ -107,7 +108,7 @@ Responda APENAS em JSON com o formato:
 
     return parsed;
   } catch (error) {
-    console.error('❌ Erro no prompt generator:', error);
+    logger.error('❌ Erro no prompt generator:', error);
     return buildFallbackPrompt(userObjective, detectedFunnel);
   }
 }

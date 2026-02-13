@@ -5,6 +5,7 @@
 // =====================================================
 
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
+import { logger } from '@/lib/logger';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GA4Row = any;
@@ -26,7 +27,7 @@ function getCredentials(): { client_email?: string; private_key?: string } | nul
       }
       return creds;
     } catch {
-      console.error('❌ Erro ao parsear GOOGLE_APPLICATION_CREDENTIALS_JSON');
+      logger.error('❌ Erro ao parsear GOOGLE_APPLICATION_CREDENTIALS_JSON');
     }
   }
 
@@ -50,7 +51,7 @@ function getClient(): BetaAnalyticsDataClient | null {
       projectId: process.env.GOOGLE_PROJECT_ID,
     });
   } catch (error) {
-    console.error('❌ Erro ao criar GA4 client:', error);
+    logger.error('❌ Erro ao criar GA4 client:', error);
     return null;
   }
 }

@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
-
-// ─── Helper: extrair corretor_id do cookie ─────────────────
-function getCorretorIdFromCookie(request: NextRequest): string | null {
-  const token = request.cookies.get('corretor_token')?.value;
-  if (!token) return null;
-  try {
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (decoded.exp && decoded.exp < Date.now()) return null;
-    return decoded.id || null;
-  } catch {
-    return null;
-  }
-}
+import { getCorretorIdFromRequest } from '@/lib/auth-jwt';
+import { logger } from '@/lib/logger';
 
 // ─── GET: Buscar dados do corretor ──────────────────────────
 export async function GET(request: NextRequest) {
   try {
-    const corretorId = getCorretorIdFromCookie(request);
+    const corretorId = await getCorretorIdFromRequest(request);
     if (!corretorId) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
@@ -70,7 +59,7 @@ export async function GET(request: NextRequest) {
       alteracoes: alteracoes || [],
     });
   } catch (err) {
-    console.error('[perfil GET]', err);
+    logger.error('Erro no perfil GET', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
@@ -78,7 +67,7 @@ export async function GET(request: NextRequest) {
 // ─── PATCH: Atualizar email ou senha ────────────────────────
 export async function PATCH(request: NextRequest) {
   try {
-    const corretorId = getCorretorIdFromCookie(request);
+    const corretorId = await getCorretorIdFromRequest(request);
     if (!corretorId) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
@@ -139,7 +128,7 @@ export async function PATCH(request: NextRequest) {
         .eq('id', corretorId);
 
       if (updateErr) {
-        console.error('[perfil PATCH slug]', updateErr);
+        logger.error('Erro ao salvar slug', updateErr, { corretor_id: corretorId });
         return NextResponse.json({ error: 'Erro ao salvar link' }, { status: 500 });
       }
 
@@ -174,7 +163,7 @@ export async function PATCH(request: NextRequest) {
         .eq('id', corretorId);
 
       if (updateErr) {
-        console.error('[perfil PATCH email]', updateErr);
+        logger.error('Erro ao atualizar email corretor', updateErr, { corretor_id: corretorId });
         return NextResponse.json({ error: 'Erro ao atualizar e-mail' }, { status: 500 });
       }
 
@@ -220,7 +209,7 @@ export async function PATCH(request: NextRequest) {
         .eq('id', corretorId);
 
       if (updateErr) {
-        console.error('[perfil PATCH senha]', updateErr);
+        logger.error('Erro ao alterar senha corretor', updateErr, { corretor_id: corretorId });
         return NextResponse.json({ error: 'Erro ao alterar senha' }, { status: 500 });
       }
 
@@ -229,7 +218,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ error: 'Nenhum dado para atualizar' }, { status: 400 });
   } catch (err) {
-    console.error('[perfil PATCH]', err);
+    logger.error('Erro no perfil PATCH', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

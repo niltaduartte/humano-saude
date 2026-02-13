@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { isMetaConfigured, getMetaConfig } from '@/lib/ads/meta-client';
 import type { PlatformAccount } from '@/lib/consolidator';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,7 +93,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Accounts API Error:', error);
+    logger.error('❌ Accounts API Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
       }, { onConflict: 'is_default' });
 
     if (error) {
-      console.error('❌ Save account error:', error);
+      logger.error('❌ Save account error:', error);
       return NextResponse.json(
         { success: false, error: 'Erro ao salvar configuração' },
         { status: 500 }
@@ -150,7 +151,7 @@ export async function POST(request: NextRequest) {
       message: `Conta ${platform} configurada com sucesso`,
     });
   } catch (error) {
-    console.error('❌ Accounts POST Error:', error);
+    logger.error('❌ Accounts POST Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

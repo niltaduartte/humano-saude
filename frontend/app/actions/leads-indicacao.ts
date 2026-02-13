@@ -1,6 +1,7 @@
 'use server';
 
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 // =============================================
 // TIPOS
@@ -67,7 +68,7 @@ export async function getCorretorBySlug(slug: string): Promise<{
 
     return { success: true, data };
   } catch (err) {
-    console.error('[getCorretorBySlug]', err);
+    logger.error('[getCorretorBySlug]', err);
     return { success: false, error: 'Erro ao buscar corretor' };
   }
 }
@@ -123,7 +124,7 @@ export async function salvarLeadIndicacao(dados: {
 
     return { success: true, lead_id: data?.id };
   } catch (err) {
-    console.error('[salvarLeadIndicacao]', err);
+    logger.error('[salvarLeadIndicacao]', err);
     return { success: false, error: 'Erro ao salvar lead' };
   }
 }
@@ -147,7 +148,7 @@ export async function marcarClicouContato(leadId: string): Promise<{ success: bo
 
     return { success: true };
   } catch (err) {
-    console.error('[marcarClicouContato]', err);
+    logger.error('[marcarClicouContato]', err);
     return { success: false };
   }
 }
@@ -171,7 +172,7 @@ export async function atualizarStatusLead(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[atualizarStatusLead]', err);
+    logger.error('[atualizarStatusLead]', err);
     return { success: false, error: 'Erro ao atualizar status' };
   }
 }
@@ -261,7 +262,7 @@ export async function getIndicacoesCorretor(
       },
     };
   } catch (err) {
-    console.error('[getIndicacoesCorretor]', err);
+    logger.error('[getIndicacoesCorretor]', err);
     return { success: false, error: 'Erro ao buscar indicações' };
   }
 }

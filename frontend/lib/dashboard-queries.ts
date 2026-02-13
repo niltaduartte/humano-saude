@@ -18,6 +18,7 @@ import type {
   AnalyticsFunnel,
   AnalyticsVisitorsOnline,
 } from '@/lib/types/analytics';
+import { logger } from '@/lib/logger';
 
 // =====================================================
 // CONSTANTES FINANCEIRAS
@@ -154,7 +155,7 @@ export async function fetchDashboardMetrics(
       };
     }
   } catch (err) {
-    console.error('❌ fetchDashboardMetrics RPC error:', err);
+    logger.error('❌ fetchDashboardMetrics RPC error:', err);
   }
 
   // Fallback: query direta

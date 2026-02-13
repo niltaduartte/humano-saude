@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { logger } from '@/lib/logger';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
@@ -46,7 +47,7 @@ Agora transforme o pedido do corretor em um prompt técnico assim.`;
     return NextResponse.json({ success: true, text });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[AI Text] Error:', msg);
+    logger.error('[AI Text] Error:', msg);
     return NextResponse.json({ error: 'Erro ao gerar texto' }, { status: 500 });
   }
 }

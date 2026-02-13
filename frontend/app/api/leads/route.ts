@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { apiLeadSchema } from '@/lib/validations';
-
-// Inicializar Supabase com Service Role (server-side)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+import { checkRateLimit, leadsLimiter } from '@/lib/rate-limit';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 10 leads/min por IP
+    const blocked = await checkRateLimit(request, leadsLimiter);
+    if (blocked) return blocked;
+
     const body = await request.json();
     
     // Validar dados
@@ -33,32 +27,53 @@ export async function POST(request: NextRequest) {
                 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
     
-    // Inserir no Supabase
+    // ✅ Tabela unificada: insurance_leads (antes era leads_landing)
+    const supabase = createServiceClient();
     const { data, error } = await supabase
-      .from('leads_landing')
+      .from('insurance_leads')
       .insert([
         {
-          ...validatedData,
+          nome: validatedData.nome,
+          email: validatedData.email,
+          whatsapp: validatedData.telefone,
+          telefone: validatedData.telefone,
+          perfil: validatedData.perfil,
+          tipo_contratacao: validatedData.tipo_contratacao || null,
+          cnpj: validatedData.cnpj || null,
+          acomodacao: validatedData.acomodacao || null,
+          idades_beneficiarios: validatedData.idades_beneficiarios || null,
+          bairro: validatedData.bairro || null,
           top_3_planos,
           ip_address: ip,
           user_agent: userAgent,
-          status: 'Novo',
-          origem: 'Landing Page',
+          status: 'novo',
+          origem: 'landing',
+          utm_source: validatedData.utm_source || null,
+          utm_medium: validatedData.utm_medium || null,
+          utm_campaign: validatedData.utm_campaign || null,
+          historico: [
+            {
+              timestamp: new Date().toISOString(),
+              evento: 'lead_criado',
+              origem: 'landing_page',
+              detalhes: 'Lead criado via formulário da landing page',
+            },
+          ],
+          arquivado: false,
         },
       ])
       .select()
       .single();
     
     if (error) {
-      console.error('Erro ao inserir lead:', error);
+      logger.error('Erro ao inserir lead', error as Error, { origem: 'landing' });
       return NextResponse.json(
         { error: 'Erro ao salvar lead', details: error.message },
         { status: 500 }
       );
     }
     
-    // ✅ Enviar email via Resend (opcional)
-    // await sendLeadNotification(data);
+    logger.info('Lead criado com sucesso', { lead_id: data.id, origem: 'landing' });
     
     return NextResponse.json(
       { 
@@ -77,7 +92,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.error('Erro no servidor:', error);
+    logger.error('Erro no servidor (leads)', error as Error, { path: '/api/leads' });
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

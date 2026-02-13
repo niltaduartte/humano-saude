@@ -1,7 +1,33 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+// Secret para verificação de JWT no middleware (Edge Runtime)
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET || '';
+  return new TextEncoder().encode(secret);
+}
+
+// Verificar JWT retornando payload ou null
+async function verifyJwt(token: string): Promise<{ email: string; role: string; corretor_id?: string } | null> {
+  try {
+    const secret = getJwtSecret();
+    if (secret.length === 0) return null;
+    const { payload } = await jwtVerify(token, secret);
+    return payload as { email: string; role: string; corretor_id?: string };
+  } catch {
+    return null;
+  }
+}
+
+// Verifica token JWT — retorna válido/inválido + role
+async function resolveToken(token: string): Promise<{ valid: boolean; role?: string }> {
+  const jwt = await verifyJwt(token);
+  if (jwt) return { valid: true, role: jwt.role };
+  return { valid: false };
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ============================================
@@ -15,6 +41,18 @@ export function middleware(request: NextRequest) {
     if (!token && pathname !== '/portal-interno-hks-2026/login') {
       const loginUrl = new URL('/admin-login', request.url);
       return NextResponse.redirect(loginUrl);
+    }
+
+    // Se tiver token, verificar assinatura JWT
+    if (token) {
+      const result = await resolveToken(token);
+      if (!result.valid) {
+        // Token inválido/expirado → limpar cookie e redirecionar
+        const loginUrl = new URL('/admin-login', request.url);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.set('admin_token', '', { maxAge: 0, path: '/' });
+        return response;
+      }
     }
   }
 
@@ -41,6 +79,14 @@ export function middleware(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    const result = await resolveToken(token);
+    if (!result.valid) {
+      return NextResponse.json(
+        { error: 'Token inválido ou expirado' },
+        { status: 401 }
+      );
+    }
   }
 
   // ============================================
@@ -57,6 +103,14 @@ export function middleware(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    const result = await resolveToken(token);
+    if (!result.valid) {
+      return NextResponse.json(
+        { error: 'Token inválido ou expirado' },
+        { status: 401 }
+      );
+    }
   }
 
   // ============================================
@@ -70,6 +124,14 @@ export function middleware(request: NextRequest) {
     if (!token) {
       const loginUrl = new URL('/dashboard/corretor/login', request.url);
       return NextResponse.redirect(loginUrl);
+    }
+
+    const result = await resolveToken(token);
+    if (!result.valid) {
+      const loginUrl = new URL('/dashboard/corretor/login', request.url);
+      const response = NextResponse.redirect(loginUrl);
+      response.cookies.set('corretor_token', '', { maxAge: 0, path: '/' });
+      return response;
     }
 
     const response = NextResponse.next();

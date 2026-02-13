@@ -5,6 +5,7 @@
 
 import { INTEREST_MAPPINGS } from './ads/types';
 import type { FacebookTargeting } from './ads/types';
+import { logger } from '@/lib/logger';
 
 const META_API_VERSION = 'v21.0';
 
@@ -255,13 +256,13 @@ export async function createCustomAudience(
     const data = await response.json();
 
     if (!response.ok || data.error) {
-      console.error('❌ Erro ao criar Custom Audience:', data.error?.message);
+      logger.error('❌ Erro ao criar Custom Audience:', data.error?.message);
       return null;
     }
 
     return { id: data.id, name: payload.name };
   } catch (error) {
-    console.error('❌ Erro ao criar Custom Audience:', error);
+    logger.error('❌ Erro ao criar Custom Audience:', error);
     return null;
   }
 }
@@ -350,13 +351,13 @@ export async function createLookalikeAudience(
     const data = await response.json();
 
     if (!response.ok || data.error) {
-      console.error('❌ Erro ao criar Lookalike:', data.error?.message);
+      logger.error('❌ Erro ao criar Lookalike:', data.error?.message);
       return null;
     }
 
     return { id: data.id, name };
   } catch (error) {
-    console.error('❌ Erro ao criar Lookalike:', error);
+    logger.error('❌ Erro ao criar Lookalike:', error);
     return null;
   }
 }
@@ -384,7 +385,7 @@ export async function listCustomAudiences(): Promise<
     const data = await response.json();
 
     if (!response.ok || data.error) {
-      console.error('❌ Erro ao listar audiences:', data.error?.message);
+      logger.error('❌ Erro ao listar audiences:', data.error?.message);
       return [];
     }
 
@@ -398,7 +399,7 @@ export async function listCustomAudiences(): Promise<
       })
     );
   } catch (error) {
-    console.error('❌ Erro ao listar audiences:', error);
+    logger.error('❌ Erro ao listar audiences:', error);
     return [];
   }
 }

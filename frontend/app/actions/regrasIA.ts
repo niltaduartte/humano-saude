@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -29,7 +30,7 @@ export async function getRegrasIA(): Promise<RegraIA[]> {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Erro ao buscar regras IA:', error);
+    logger.error('Erro ao buscar regras IA:', error);
     return [];
   }
 
@@ -46,7 +47,7 @@ export async function toggleRegraIA(id: string, ativa: boolean) {
     .eq('id', id);
 
   if (error) {
-    console.error('Erro ao alterar regra IA:', error);
+    logger.error('Erro ao alterar regra IA:', error);
     return { success: false, error: error.message };
   }
 

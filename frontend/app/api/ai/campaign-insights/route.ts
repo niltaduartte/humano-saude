@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { analyzeCampaigns, chatAboutCampaigns } from '@/lib/ai-advisor';
 import { getMarketingInsights } from '@/lib/meta-marketing';
 import type { CampaignData, PerformancePeriod } from '@/lib/types/ai-performance';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: analysis });
   } catch (error) {
-    console.error('❌ Campaign Insights Error:', error);
+    logger.error('❌ Campaign Insights Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { response } });
   } catch (error) {
-    console.error('❌ Campaign Chat Error:', error);
+    logger.error('❌ Campaign Chat Error:', error);
     return NextResponse.json(
       { success: false, error: 'Erro ao processar pergunta' },
       { status: 500 }

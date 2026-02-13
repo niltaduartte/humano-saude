@@ -11,6 +11,7 @@ import type {
 } from '@/lib/types/ai-performance';
 import { smartToAIFormat, generateSmartAnalysis } from '@/lib/smart-analyzer';
 import type { AdsMetrics } from '@/lib/meta-marketing';
+import { logger } from '@/lib/logger';
 
 // =====================================================
 // SYSTEM PROMPT — Identidade da IA para Humano Saúde
@@ -228,7 +229,7 @@ export async function runFullAIAnalysis(data: PerformanceData): Promise<AIAnalys
       metricas: parsed.metricas ?? { gastoTotal: 0, receitaTotal: 0, roasGeral: 0, cpaGeral: 0, ctrMedio: 0, totalVendas: 0 },
     };
   } catch (error) {
-    console.warn('⚠️ OpenAI falhou, usando Smart Analyzer como fallback:', error);
+    logger.warn('OpenAI falhou, usando Smart Analyzer como fallback', { error: error instanceof Error ? error.message : String(error) });
     return runLocalAnalysis(data);
   }
 }

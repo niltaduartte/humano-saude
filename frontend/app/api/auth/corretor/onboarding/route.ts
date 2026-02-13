@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { validarDocumento } from '@/lib/validations';
 import { enviarEmailAguardeVerificacao, enviarEmailOnboardingConcluidoAdmin } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
         .insert(insertData);
 
       if (insertError) {
-        console.error('[onboarding bancario]', insertError);
+        logger.error('[onboarding bancario]', insertError);
         return NextResponse.json(
           { error: `Erro ao salvar dados bancários: ${insertError.message}` },
           { status: 500 },
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
             corretorCpf: cpfCorretor,
           });
         } catch (emailError) {
-          console.error('[onboarding] Erro ao enviar emails:', emailError);
+          logger.error('[onboarding] Erro ao enviar emails:', emailError);
           // Não retorna erro - os dados bancários já foram salvos
         }
       }
@@ -230,7 +231,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (uploadError) {
-        console.error(`[onboarding upload ${tipo}]`, uploadError);
+        logger.error(`[onboarding upload ${tipo}]`, uploadError);
         // Continuar com os outros uploads
         uploadResults.push({ tipo, success: false, error: uploadError.message });
         continue;
@@ -259,7 +260,7 @@ export async function POST(request: NextRequest) {
         .insert(docInsert);
 
       if (dbError) {
-        console.error(`[onboarding db ${tipo}]`, dbError);
+        logger.error(`[onboarding db ${tipo}]`, dbError);
         uploadResults.push({ tipo, success: false, error: dbError.message });
       } else {
         uploadResults.push({ tipo, success: true });
@@ -296,7 +297,7 @@ export async function POST(request: NextRequest) {
       results: uploadResults,
     });
   } catch (err) {
-    console.error('[onboarding] unexpected', err);
+    logger.error('[onboarding] unexpected', err);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 },

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getMarketingInsights, SUPPORTED_DATE_PRESETS } from '@/lib/meta-marketing';
 import { isMetaConfigured } from '@/lib/ads/meta-client';
 import type { MetaDatePreset } from '@/lib/ads/types';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Erro ao buscar métricas:', error);
+    logger.error('❌ Erro ao buscar métricas:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

@@ -5,6 +5,7 @@
 
 import { createServiceClient } from '../supabase';
 import { getMetaConfig } from './meta-client';
+import { logger } from '@/lib/logger';
 
 const META_API_VERSION = 'v24.0';
 const SIMILARITY_THRESHOLD = 0.6; // 60% = duplicação
@@ -51,7 +52,7 @@ export async function fetchActiveCampaigns(): Promise<ActiveAdCopy[]> {
 
     return ads;
   } catch (error) {
-    console.error('❌ Erro ao buscar campanhas ativas:', error);
+    logger.error('❌ Erro ao buscar campanhas ativas:', error);
     return [];
   }
 }
@@ -93,7 +94,7 @@ async function cacheAds(accountId: string, ads: ActiveAdCopy[]): Promise<void> {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'account_id' });
   } catch (error) {
-    console.error('⚠️ Falha ao salvar cache:', error);
+    logger.error('⚠️ Falha ao salvar cache:', error);
   }
 }
 

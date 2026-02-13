@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -43,9 +44,9 @@ export async function changeAdminPassword(currentPassword: string, newPassword: 
     //    - Ou Vercel env: API Vercel para atualizar ADMIN_PASSWORD
     //
     // Como usamos env vars estáticas, logamos uma mensagem clara:
-    console.log('⚠️ ADMIN_PASSWORD change requested. Update the environment variable:');
-    console.log(`   ADMIN_PASSWORD=${newPassword}`);
-    console.log('   Then redeploy the application.');
+    logger.info('⚠️ ADMIN_PASSWORD change requested. Update the environment variable:');
+    logger.info(`   ADMIN_PASSWORD=${newPassword}`);
+    logger.info('   Then redeploy the application.');
 
     // Forçar logout para re-autenticar com a nova senha
     // (na prática a senha só muda quando o env var é atualizado)

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUnifiedDashboardData } from '@/lib/analytics-hub';
 import type { PerformancePeriod } from '@/lib/types/ai-performance';
+import { logger } from '@/lib/logger';
 
 // Cache simples em memória (5 min)
 let insightCache: { data: unknown; ts: number; period: string } | null = null;
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: dashboard });
   } catch (error) {
-    console.error('❌ Analytics Insight Error:', error);
+    logger.error('❌ Analytics Insight Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { response } });
   } catch (error) {
-    console.error('❌ Analytics Chat Error:', error);
+    logger.error('❌ Analytics Chat Error:', error);
     return NextResponse.json(
       { success: false, error: 'Erro ao processar pergunta' },
       { status: 500 }

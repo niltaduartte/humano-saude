@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { signToken } from '@/lib/auth-jwt';
 
 // =============================================
 // Credenciais de teste (DEV ONLY)
@@ -63,14 +64,12 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const token = Buffer.from(
-          JSON.stringify({
-            id: corretor.id,
-            email,
-            role: corretor.role,
-            exp: Date.now() + 86400000, // 24h
-          }),
-        ).toString('base64');
+        // JWT assinado com HS256 (24h)
+        const token = await signToken({
+          email,
+          role: (corretor.role as 'admin' | 'corretor') || 'corretor',
+          corretor_id: corretor.id,
+        });
 
         const response = NextResponse.json({
           success: true,
@@ -109,14 +108,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = Buffer.from(
-      JSON.stringify({
-        id: devUser.corretor.id,
-        email: devUser.email,
-        role: devUser.corretor.role,
-        exp: Date.now() + 86400000,
-      }),
-    ).toString('base64');
+    const token = await signToken({
+      email: devUser.email,
+      role: devUser.corretor.role as 'admin' | 'corretor',
+      corretor_id: devUser.corretor.id,
+    });
 
     const response = NextResponse.json({
       success: true,

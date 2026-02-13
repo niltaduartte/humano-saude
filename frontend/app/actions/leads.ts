@@ -2,6 +2,7 @@
 
 import { createServiceClient } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 // Tipo para os dados do lead vindos do backend Python
 export type ScannedLeadData = {
@@ -98,7 +99,7 @@ export async function saveScannedLead(
       .single();
 
     if (error) {
-      console.error('❌ Erro ao salvar lead no Supabase:', error);
+      logger.error('Erro ao salvar lead no Supabase', error);
       return {
         success: false,
         error: 'database_error',
@@ -110,7 +111,7 @@ export async function saveScannedLead(
     revalidatePath('/portal-interno-hks-2026/leads');
     revalidatePath('/portal-interno-hks-2026');
 
-    console.log('✅ Lead salvo com sucesso:', data.id);
+    logger.info('Lead salvo com sucesso', { lead_id: data.id });
 
     return {
       success: true,
@@ -119,7 +120,7 @@ export async function saveScannedLead(
     };
 
   } catch (error: any) {
-    console.error('❌ Erro inesperado ao salvar lead:', error);
+    logger.error('Erro inesperado ao salvar lead', error);
     return {
       success: false,
       error: 'unexpected_error',
@@ -165,14 +166,14 @@ export async function getLeads(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar leads:', error);
+      logger.error('Erro ao buscar leads', error);
       return { success: false, data: [], error: error.message };
     }
 
     return { success: true, data: data || [] };
 
   } catch (error: any) {
-    console.error('❌ Erro inesperado ao buscar leads:', error);
+    logger.error('Erro inesperado ao buscar leads', error);
     return { success: false, data: [], error: error?.message };
   }
 }
@@ -230,7 +231,7 @@ export async function updateLeadStatus(
       .eq('id', leadId);
 
     if (updateError) {
-      console.error('❌ Erro ao atualizar status:', updateError);
+      logger.error('Erro ao atualizar status do lead', updateError, { lead_id: leadId, new_status: newStatus });
       return {
         success: false,
         error: 'database_error',
@@ -271,12 +272,12 @@ export async function updateLeadStatus(
               })
               .eq('id', indicacao.id);
 
-            console.log(`🔄 Sync: leads_indicacao ${indicacao.id} → ${statusCorretor} (corretor: ${indicacao.corretor_id})`);
+            logger.info('Sync leads_indicacao', { indicacao_id: indicacao.id, status: statusCorretor, corretor_id: indicacao.corretor_id });
           }
         }
       } catch (syncErr) {
         // Não falhar se sync falhar
-        console.warn('⚠️ Sync leads_indicacao falhou:', syncErr);
+        logger.warn('Sync leads_indicacao falhou', { error: String(syncErr) });
       }
     }
 
@@ -292,7 +293,7 @@ export async function updateLeadStatus(
     };
 
   } catch (error: any) {
-    console.error('❌ Erro ao atualizar status:', error);
+    logger.error('Erro ao atualizar status', error);
     return {
       success: false,
       error: 'unexpected_error',
@@ -315,14 +316,14 @@ export async function getDashboardStats() {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao buscar estatísticas:', error);
+      logger.error('Erro ao buscar estatísticas', error);
       return { success: false, data: null, error: error.message };
     }
 
     return { success: true, data };
 
   } catch (error: any) {
-    console.error('❌ Erro ao buscar estatísticas:', error);
+    logger.error('Erro ao buscar estatísticas', error);
     return { success: false, data: null, error: error?.message };
   }
 }
@@ -470,7 +471,7 @@ export async function saveCalculadoraLead(
       .single();
 
     if (error) {
-      console.error('❌ Erro ao salvar lead da calculadora:', error);
+      logger.error('Erro ao salvar lead da calculadora', error);
       return {
         success: false,
         error: 'database_error',
@@ -481,7 +482,7 @@ export async function saveCalculadoraLead(
     revalidatePath('/portal-interno-hks-2026/leads');
     revalidatePath('/portal-interno-hks-2026');
 
-    console.log('✅ Lead da calculadora salvo:', newLead?.id, `| corretor: ${data.corretor_slug || 'direto'}`);
+    logger.info('Lead da calculadora salvo', { lead_id: newLead?.id, corretor: data.corretor_slug || 'direto' });
 
     return {
       success: true,
@@ -489,7 +490,7 @@ export async function saveCalculadoraLead(
       message: 'Lead salvo com sucesso!',
     };
   } catch (error: any) {
-    console.error('❌ Erro inesperado:', error);
+    logger.error('Erro inesperado (calculadora)', error);
     return {
       success: false,
       error: 'unexpected_error',

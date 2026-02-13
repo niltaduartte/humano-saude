@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -28,7 +29,7 @@ export async function getAutomacoes(): Promise<Automacao[]> {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Erro ao buscar automações:', error);
+    logger.error('Erro ao buscar automações:', error);
     return [];
   }
 
@@ -45,7 +46,7 @@ export async function toggleAutomacao(id: string, ativa: boolean) {
     .eq('id', id);
 
   if (error) {
-    console.error('Erro ao alterar automação:', error);
+    logger.error('Erro ao alterar automação:', error);
     return { success: false, error: error.message };
   }
 

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabase = createServiceClient();
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +35,7 @@ export async function POST(req: NextRequest) {
       .upload(path, buffer, { contentType: mimeType, upsert: true });
 
     if (uploadError) {
-      console.error('[Save Image] Upload error:', uploadError.message);
+      logger.error('[Save Image] Upload error:', uploadError.message);
       return NextResponse.json({ error: 'Falha no upload' }, { status: 500 });
     }
 
@@ -61,7 +59,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`[Save Image] Salvo: ${path} | Origem: ${origem}`);
+    logger.info(`[Save Image] Salvo: ${path} | Origem: ${origem}`);
 
     return NextResponse.json({
       success: true,
@@ -71,7 +69,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[Save Image] Error:', msg);
+    logger.error('[Save Image] Error:', msg);
     return NextResponse.json({ error: 'Erro interno ao salvar' }, { status: 500 });
   }
 }
@@ -96,14 +94,14 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[Save Image] List error:', error.message);
+      logger.error('[Save Image] List error:', error.message);
       return NextResponse.json({ error: 'Erro ao buscar imagens' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, images: data || [] });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[Save Image] Error:', msg);
+    logger.error('[Save Image] Error:', msg);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

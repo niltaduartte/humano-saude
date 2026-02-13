@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -27,7 +28,7 @@ export async function getNotificacoes(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar notificações:', error);
+      logger.error('❌ Erro ao buscar notificações:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -126,7 +127,7 @@ export async function createNotificacao(input: {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao criar notificação:', error);
+      logger.error('❌ Erro ao criar notificação:', error);
       return { success: false, error: error.message };
     }
 

@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -31,7 +32,7 @@ export async function getDocumentos(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar documentos:', error);
+      logger.error('❌ Erro ao buscar documentos:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -72,7 +73,7 @@ export async function createDocumento(input: {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao registrar documento:', error);
+      logger.error('❌ Erro ao registrar documento:', error);
       return { success: false, data: null, error: error.message };
     }
 

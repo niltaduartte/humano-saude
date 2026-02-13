@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { enviarEmailAlteracaoBancariaAprovada, enviarEmailAlteracaoBancariaRejeitada } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (insertErr) {
-        console.error('[aprovar-alteracao] insert error:', insertErr);
+        logger.error('[aprovar-alteracao] insert error:', insertErr);
         return NextResponse.json({ error: insertErr.message }, { status: 500 });
       }
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
           bancoNovo: solicitacao.banco_nome,
         });
       } catch (emailErr) {
-        console.error('[aprovar-alteracao] email error:', emailErr);
+        logger.error('[aprovar-alteracao] email error:', emailErr);
       }
 
       return NextResponse.json({
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
         motivo: motivo_rejeicao || 'Solicitação não aprovada',
       });
     } catch (emailErr) {
-      console.error('[rejeitar-alteracao] email error:', emailErr);
+      logger.error('[rejeitar-alteracao] email error:', emailErr);
     }
 
     return NextResponse.json({
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
       message: 'Alteração bancária rejeitada',
     });
   } catch (err) {
-    console.error('[aprovar-alteracao-bancaria]', err);
+    logger.error('[aprovar-alteracao-bancaria]', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

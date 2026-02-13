@@ -19,6 +19,7 @@ import {
   generateAlerts,
   DEFAULT_BENCHMARKS,
 } from '@/lib/consolidator';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,7 +87,7 @@ async function fetchMetaCampaigns(period: MetaDatePreset): Promise<CockpitCampai
       };
     });
   } catch (error) {
-    console.error('❌ Meta fetch error:', error);
+    logger.error('❌ Meta fetch error:', error);
     return [];
   }
 }
@@ -284,7 +285,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('❌ Consolidated Metrics Error:', error);
+    logger.error('❌ Consolidated Metrics Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

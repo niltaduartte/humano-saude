@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { enviarEmailConviteCorretor } from '@/lib/email';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createServiceClient();
 
 // ─── POST: Enviar convite para ser corretor ─────────────────
 export async function POST(request: NextRequest) {
@@ -51,7 +49,7 @@ export async function POST(request: NextRequest) {
         status: 'enviado',
       });
     } catch (dbErr) {
-      console.warn('[convite] Não foi possível salvar no banco:', dbErr);
+      logger.warn('[convite] Não foi possível salvar no banco', { error: dbErr instanceof Error ? dbErr.message : String(dbErr) });
     }
 
     return NextResponse.json({
@@ -60,7 +58,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[convite-corretor] erro:', msg, err);
+    logger.error('[convite-corretor] erro', err, { message: msg });
     return NextResponse.json(
       { error: msg || 'Erro interno do servidor' },
       { status: 500 }

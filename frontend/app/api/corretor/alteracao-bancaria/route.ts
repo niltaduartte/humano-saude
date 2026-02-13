@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { enviarEmailAlteracaoBancariaCorretor, enviarEmailAlteracaoBancariaAdmin } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 // POST - Corretor solicita alteração bancária
 export async function POST(request: NextRequest) {
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertErr) {
-      console.error('[alteracao-bancaria] insert error:', insertErr);
+      logger.error('[alteracao-bancaria] insert error:', insertErr);
       return NextResponse.json({ error: insertErr.message }, { status: 500 });
     }
 
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
         motivo,
       });
     } catch (emailErr) {
-      console.error('[alteracao-bancaria] email error (non-critical):', emailErr);
+      logger.error('[alteracao-bancaria] email error (non-critical):', emailErr);
     }
 
     return NextResponse.json({
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
       id: solicitacao?.id,
     });
   } catch (err) {
-    console.error('[alteracao-bancaria]', err);
+    logger.error('[alteracao-bancaria]', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
@@ -143,13 +144,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[alteracao-bancaria GET]', error);
+      logger.error('[alteracao-bancaria GET]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, data: data || [] });
   } catch (err) {
-    console.error('[alteracao-bancaria GET]', err);
+    logger.error('[alteracao-bancaria GET]', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

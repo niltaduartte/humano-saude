@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 import type { OperadoraInsert, OperadoraUpdate } from '@/lib/types/database';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -22,7 +23,7 @@ export async function getOperadoras(apenasAtivas = true) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar operadoras:', error);
+      logger.error('❌ Erro ao buscar operadoras:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -66,7 +67,7 @@ export async function createOperadora(input: OperadoraInsert) {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao criar operadora:', error);
+      logger.error('❌ Erro ao criar operadora:', error);
       return { success: false, data: null, error: error.message };
     }
 
@@ -110,7 +111,7 @@ export async function getDesempenhoOperadoras() {
       .select('*');
 
     if (error) {
-      console.error('❌ Erro ao buscar desempenho operadoras:', error);
+      logger.error('❌ Erro ao buscar desempenho operadoras:', error);
       return { success: false, data: [], error: error.message };
     }
 

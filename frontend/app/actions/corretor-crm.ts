@@ -11,6 +11,7 @@ import type {
   KanbanColumnSlug,
   KANBAN_COLUMN_SLUG,
 } from '@/lib/types/corretor';
+import { logger } from '@/lib/logger';
 
 // ========================================
 // HELPERS
@@ -91,7 +92,7 @@ export async function getKanbanBoard(corretorId: string): Promise<{
 
     return { success: true, data: board };
   } catch (err) {
-    console.error('[getKanbanBoard]', err);
+    logger.error('[getKanbanBoard]', err);
     return { success: false, error: 'Erro ao carregar o pipeline' };
   }
 }
@@ -128,7 +129,7 @@ export async function createCrmCard(data: CrmCardInsert): Promise<{
 
     return { success: true, data: card };
   } catch (err) {
-    console.error('[createCrmCard]', err);
+    logger.error('[createCrmCard]', err);
     return { success: false, error: 'Erro ao criar card' };
   }
 }
@@ -148,7 +149,7 @@ export async function updateCrmCard(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[updateCrmCard]', err);
+    logger.error('[updateCrmCard]', err);
     return { success: false, error: 'Erro ao atualizar card' };
   }
 }
@@ -187,7 +188,7 @@ export async function moveCard(
 
     return { success: true };
   } catch (err) {
-    console.error('[moveCard]', err);
+    logger.error('[moveCard]', err);
     return { success: false, error: 'Erro ao mover card' };
   }
 }
@@ -213,7 +214,7 @@ export async function getCardInteracoes(cardId: string): Promise<{
     if (error) throw error;
     return { success: true, data: data ?? [] };
   } catch (err) {
-    console.error('[getCardInteracoes]', err);
+    logger.error('[getCardInteracoes]', err);
     return { success: false, error: 'Erro ao carregar interações' };
   }
 }
@@ -240,7 +241,7 @@ export async function addInteracao(data: CrmInteracaoInsert): Promise<{
 
     return { success: true };
   } catch (err) {
-    console.error('[addInteracao]', err);
+    logger.error('[addInteracao]', err);
     return { success: false, error: 'Erro ao registrar interação' };
   }
 }
@@ -317,7 +318,7 @@ export async function recalculateScore(cardId: string): Promise<{
 
     return { success: true, score };
   } catch (err) {
-    console.error('[recalculateScore]', err);
+    logger.error('[recalculateScore]', err);
     return { success: false, error: 'Erro ao recalcular score' };
   }
 }
@@ -443,7 +444,7 @@ export async function getCrmStats(corretorId: string): Promise<{
       },
     };
   } catch (err) {
-    console.error('[getCrmStats]', err);
+    logger.error('[getCrmStats]', err);
     return { success: false, error: 'Erro ao carregar métricas' };
   }
 }
@@ -544,7 +545,7 @@ export async function getLeadsList(
       },
     };
   } catch (err) {
-    console.error('[getLeadsList]', err);
+    logger.error('[getLeadsList]', err);
     return { success: false, error: 'Erro ao carregar leads' };
   }
 }
@@ -569,7 +570,7 @@ export async function deleteCrmCard(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[deleteCrmCard]', err);
+    logger.error('[deleteCrmCard]', err);
     return { success: false, error: 'Erro ao excluir card' };
   }
 }
@@ -600,7 +601,7 @@ export async function updateCardDetails(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[updateCardDetails]', err);
+    logger.error('[updateCardDetails]', err);
     return { success: false, error: 'Erro ao atualizar card' };
   }
 }

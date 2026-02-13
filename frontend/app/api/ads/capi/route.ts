@@ -10,6 +10,7 @@ import {
   sendInitiateCheckoutEvent,
   sendViewContentEvent,
 } from '@/lib/meta-capi';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Erro CAPI:', error);
+    logger.error('❌ Erro CAPI:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

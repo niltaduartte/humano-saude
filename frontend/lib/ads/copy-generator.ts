@@ -6,6 +6,7 @@
 import OpenAI from 'openai';
 import type { GeneratedCopy, CampaignObjectiveKey } from './types';
 import { HUMANO_SAUDE_KNOWLEDGE } from '../humano-saude-knowledge';
+import { logger } from '@/lib/logger';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
 
@@ -125,7 +126,7 @@ export async function generateAdCopy(
       },
     };
   } catch (error) {
-    console.error('❌ Erro ao gerar copy:', error);
+    logger.error('❌ Erro ao gerar copy:', error);
     return generateFallbackCopy(objective, audience, imageUrl);
   }
 }

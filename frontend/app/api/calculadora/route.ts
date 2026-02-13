@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 // Validação
@@ -10,10 +11,7 @@ const calcSchema = z.object({
   cnpj: z.string().optional(),
 });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createServiceClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +28,7 @@ export async function POST(request: NextRequest) {
       .order('ordem', { ascending: true });
     
     if (error) {
-      console.error('Erro ao buscar planos:', error);
+      logger.error('Erro ao buscar planos', error);
       return NextResponse.json(
         { error: 'Erro ao buscar planos' },
         { status: 500 }
@@ -99,7 +97,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.error('Erro no cálculo:', error);
+    logger.error('Erro no cálculo', error);
     return NextResponse.json(
       { error: 'Erro ao calcular planos' },
       { status: 500 }

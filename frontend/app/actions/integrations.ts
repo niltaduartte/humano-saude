@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 import type { IntegrationSettingInsert, IntegrationSettingUpdate } from '@/lib/types/database';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -18,7 +19,7 @@ export async function getIntegrations() {
       .order('integration_name', { ascending: true });
 
     if (error) {
-      console.error('❌ Erro ao buscar integrações:', error);
+      logger.error('❌ Erro ao buscar integrações:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -145,7 +146,7 @@ export async function getWebhookLogs(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar webhook logs:', error);
+      logger.error('❌ Erro ao buscar webhook logs:', error);
       return { success: false, data: [], error: error.message };
     }
 

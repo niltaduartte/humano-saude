@@ -1,12 +1,10 @@
 // Callback OAuth — processa retorno do Facebook/Instagram
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createServiceClient } from "@/lib/supabase"
 import { InstagramAuth } from "@/lib/social-flow/networks/instagram/auth"
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createServiceClient()
 
 const PORTAL_URL = "/portal-interno-hks-2026/social-flow/settings"
 
@@ -78,7 +76,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(new URL(`${PORTAL_URL}?error=unsupported_network`, req.url))
   } catch (error) {
-    console.error("[OAuth Callback Error]", error)
+    logger.error("[OAuth Callback Error]", error)
     return NextResponse.redirect(
       new URL(`${PORTAL_URL}?error=callback_failed`, req.url)
     )

@@ -11,6 +11,7 @@ import type {
   PerformanceMetrics,
 } from '@/lib/types/ai-performance';
 import type { AdsMetrics } from '@/lib/meta-marketing';
+import { logger } from '@/lib/logger';
 
 // =====================================================
 // CACHE EM MEMÓRIA (6h TTL)
@@ -153,7 +154,7 @@ export async function analyzeCampaigns(
     setCache(cacheKey, result);
     return result;
   } catch (error) {
-    console.warn('⚠️ AI Advisor falhou, usando fallback local:', error);
+    logger.warn('AI Advisor falhou, usando fallback local', { error: error instanceof Error ? error.message : String(error) });
     return generateFallbackAnalysis(metrics, campaigns);
   }
 }

@@ -11,6 +11,7 @@ import {
   getAdSetDetails,
 } from './meta-client';
 import type { AdMetrics, OptimizationLog, OptimizationRules } from './types';
+import { logger } from '@/lib/logger';
 
 // Regras padrão (em centavos para budget, reais para spend)
 const DEFAULT_RULES: OptimizationRules = {
@@ -46,7 +47,7 @@ async function loadRulesFromDatabase(): Promise<OptimizationRules> {
       };
     }
   } catch {
-    console.warn('⚠️ Usando regras padrão de otimização');
+    logger.warn('⚠️ Usando regras padrão de otimização');
   }
   return DEFAULT_RULES;
 }
@@ -127,7 +128,7 @@ export async function optimizeCampaigns(
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Erro desconhecido';
     result.errors.push(msg);
-    console.error('❌ Erro na otimização:', msg);
+    logger.error('❌ Erro na otimização:', msg);
   }
 
   return result;
@@ -242,9 +243,9 @@ async function saveOptimizationLogs(logs: OptimizationLog[]): Promise<void> {
 
     const { error } = await supabase.from('optimization_logs').insert(rows);
     if (error) {
-      console.error('❌ Erro ao salvar logs de otimização:', error.message);
+      logger.error('❌ Erro ao salvar logs de otimização:', error.message);
     }
   } catch (error) {
-    console.error('❌ Erro ao conectar com Supabase para logs:', error);
+    logger.error('❌ Erro ao conectar com Supabase para logs:', error);
   }
 }

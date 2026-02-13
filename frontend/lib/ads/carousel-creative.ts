@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 // =====================================================
 // CAROUSEL CREATIVE — Builder de Anúncios Carrossel
 // Monta criativos de carrossel para Meta Ads
@@ -132,17 +134,17 @@ export async function createCarouselCreative(
   const adAccountId = process.env.META_AD_ACCOUNT_ID || process.env.FACEBOOK_AD_ACCOUNT_ID || '';
 
   if (!accessToken || !adAccountId) {
-    console.error('❌ META_ACCESS_TOKEN ou META_AD_ACCOUNT_ID não configurados');
+    logger.error('❌ META_ACCESS_TOKEN ou META_AD_ACCOUNT_ID não configurados');
     return null;
   }
 
   if (params.cards.length < 2) {
-    console.error('❌ Carrossel precisa de no mínimo 2 cards');
+    logger.error('❌ Carrossel precisa de no mínimo 2 cards');
     return null;
   }
 
   if (params.cards.length > 10) {
-    console.error('❌ Carrossel suporta no máximo 10 cards');
+    logger.error('❌ Carrossel suporta no máximo 10 cards');
     return null;
   }
 
@@ -167,7 +169,7 @@ export async function createCarouselCreative(
     const data = await response.json();
 
     if (!response.ok || data.error) {
-      console.error('❌ Erro ao criar carrossel:', data.error?.message);
+      logger.error('❌ Erro ao criar carrossel:', data.error?.message);
       return null;
     }
 
@@ -177,7 +179,7 @@ export async function createCarouselCreative(
       cardCount: params.cards.length,
     };
   } catch (error) {
-    console.error('❌ Erro ao criar carrossel:', error);
+    logger.error('❌ Erro ao criar carrossel:', error);
     return null;
   }
 }

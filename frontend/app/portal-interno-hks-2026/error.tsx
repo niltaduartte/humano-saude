@@ -12,7 +12,14 @@ export default function PortalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[Portal Error]', error);
+    // Log estruturado (Fase 2.5)
+    console.error('[PORTAL]', JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: 'error',
+      message: error.message,
+      digest: error.digest,
+      module: 'portal-interno',
+    }));
   }, [error]);
 
   return (

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createServiceClient();
 
 const META_VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN || 'humano_saude_meta_2026';
 
@@ -20,7 +18,7 @@ export async function GET(request: NextRequest) {
   const challenge = searchParams.get('hub.challenge');
 
   if (mode === 'subscribe' && token === META_VERIFY_TOKEN) {
-    console.log('✅ Meta webhook verificado com sucesso');
+    logger.info('Meta webhook verificado com sucesso');
     return new NextResponse(challenge, { status: 200 });
   }
 
@@ -68,14 +66,14 @@ export async function POST(request: NextRequest) {
           }
 
           default:
-            console.log(`📩 Meta webhook field não processado: ${field}`);
+            logger.debug('Meta webhook field não processado', { field });
         }
       }
     }
 
     return NextResponse.json({ status: 'ok' });
   } catch (error) {
-    console.error('❌ Erro no webhook Meta:', error);
+    logger.error('Erro no webhook Meta', error);
 
     // Sempre retornar 200 para o Meta não reenviar
     return NextResponse.json({ status: 'error_logged' });
@@ -105,12 +103,12 @@ async function processLeadGen(value: Record<string, unknown>) {
       .insert(leadData);
 
     if (error) {
-      console.error('❌ Erro ao salvar lead do Facebook:', error);
+      logger.error('Erro ao salvar lead do Facebook', error);
     } else {
-      console.log('✅ Lead do Facebook salvo com sucesso');
+      logger.info('Lead do Facebook salvo com sucesso', { form_id: value.form_id });
     }
   } catch (error) {
-    console.error('❌ Erro processando leadgen:', error);
+    logger.error('Erro processando leadgen', error);
   }
 }
 
@@ -136,9 +134,9 @@ async function processAdInsights(value: Record<string, unknown>) {
       .eq('campaign_id', campaignId);
 
     if (error) {
-      console.error('❌ Erro ao atualizar métricas da campanha:', error);
+      logger.error('Erro ao atualizar métricas da campanha', error, { campaign_id: campaignId });
     }
   } catch (error) {
-    console.error('❌ Erro processando ad_insights:', error);
+    logger.error('Erro processando ad_insights', error);
   }
 }

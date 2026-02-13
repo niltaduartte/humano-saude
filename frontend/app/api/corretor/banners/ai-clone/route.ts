@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { logger } from '@/lib/logger';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
@@ -54,23 +55,23 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Imagem muito grande para análise. Máximo ~15MB.' }, { status: 400 });
       }
 
-      console.log(`[AI Clone] Analyzing image: ${mimeType}, ~${Math.round(sizeBytes / 1024)}KB`);
+      logger.info(`[AI Clone] Analyzing image: ${mimeType}, ~${Math.round(sizeBytes / 1024)}KB`);
 
       const TEXT_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'];
       let result;
       for (const modelName of TEXT_MODELS) {
         try {
-          console.log(`[AI Clone] Tentando modelo: ${modelName}`);
+          logger.info(`[AI Clone] Tentando modelo: ${modelName}`);
           const model = genAI.getGenerativeModel({ model: modelName });
           result = await model.generateContent([
             { text: ANALYZE_SYSTEM },
             { inlineData: { mimeType, data: base64Data } },
             { text: `Operadora do corretor: ${operadora || 'Amil'}. Plano: ${plano || 'não especificado'}.${instrucao ? ` Instrução adicional: ${instrucao}` : ''}` },
           ]);
-          console.log(`[AI Clone] Análise OK com modelo: ${modelName}`);
+          logger.info(`[AI Clone] Análise OK com modelo: ${modelName}`);
           break;
         } catch (modelErr) {
-          console.warn(`[AI Clone] Modelo ${modelName} falhou:`, modelErr instanceof Error ? modelErr.message : modelErr);
+          logger.warn(`[AI Clone] Modelo ${modelName} falhou`, { error: modelErr instanceof Error ? modelErr.message : String(modelErr) });
           if (modelName === TEXT_MODELS[TEXT_MODELS.length - 1]) throw modelErr;
         }
       }
@@ -185,7 +186,7 @@ Gere a imagem agora no formato ${isStories ? '9:16 VERTICAL' : '4:5 FEED'}.`;
 
       for (const modelName of IMAGE_MODELS) {
         try {
-          console.log(`[AI Clone] Gerando imagem com modelo: ${modelName}`);
+          logger.info(`[AI Clone] Gerando imagem com modelo: ${modelName}`);
           const model = genAI.getGenerativeModel({
             model: modelName,
             generationConfig: {
@@ -209,7 +210,7 @@ Gere a imagem agora no formato ${isStories ? '9:16 VERTICAL' : '4:5 FEED'}.`;
           }
 
           if (generatedImageBase64) {
-            console.log(`[AI Clone] Imagem gerada com sucesso: ${modelName}`);
+            logger.info(`[AI Clone] Imagem gerada com sucesso: ${modelName}`);
             return NextResponse.json({
               success: true,
               imageUrl: generatedImageBase64,
@@ -217,7 +218,7 @@ Gere a imagem agora no formato ${isStories ? '9:16 VERTICAL' : '4:5 FEED'}.`;
             });
           }
         } catch (modelErr) {
-          console.warn(`[AI Clone] Modelo ${modelName} falhou:`, modelErr instanceof Error ? modelErr.message : modelErr);
+          logger.warn(`[AI Clone] Modelo ${modelName} falhou`, { error: modelErr instanceof Error ? modelErr.message : String(modelErr) });
           continue;
         }
       }
@@ -232,7 +233,7 @@ Gere a imagem agora no formato ${isStories ? '9:16 VERTICAL' : '4:5 FEED'}.`;
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[AI Clone] Error:', msg);
+    logger.error('[AI Clone] Error:', msg);
     return NextResponse.json({ error: 'Erro interno na IA Clone' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 // =============================================
 // TIPOS
@@ -150,7 +151,7 @@ export async function getProducoes(
 
     return { success: true, data: data ?? [], total: count ?? 0, totalValor };
   } catch (err) {
-    console.error('[getProducoes]', err);
+    logger.error('[getProducoes]', err);
     return { success: false, error: 'Erro ao carregar produções' };
   }
 }
@@ -174,7 +175,7 @@ export async function getParcelasProducao(
     if (error) throw error;
     return { success: true, data: data ?? [] };
   } catch (err) {
-    console.error('[getParcelasProducao]', err);
+    logger.error('[getParcelasProducao]', err);
     return { success: false, error: 'Erro ao carregar parcelas' };
   }
 }
@@ -211,7 +212,7 @@ export async function getRelatoriosComissao(
     if (error) throw error;
     return { success: true, data: data ?? [], total: count ?? 0 };
   } catch (err) {
-    console.error('[getRelatoriosComissao]', err);
+    logger.error('[getRelatoriosComissao]', err);
     return { success: false, error: 'Erro ao carregar relatórios de comissão' };
   }
 }
@@ -235,7 +236,7 @@ export async function getRelatorioDetalhes(
     if (error) throw error;
     return { success: true, data };
   } catch (err) {
-    console.error('[getRelatorioDetalhes]', err);
+    logger.error('[getRelatorioDetalhes]', err);
     return { success: false, error: 'Erro ao carregar detalhes do relatório' };
   }
 }
@@ -263,7 +264,7 @@ export async function getCorretorEnderecos(
     if (error) throw error;
     return { success: true, data: data ?? [] };
   } catch (err) {
-    console.error('[getCorretorEnderecos]', err);
+    logger.error('[getCorretorEnderecos]', err);
     return { success: false, error: 'Erro ao carregar endereços' };
   }
 }
@@ -311,7 +312,7 @@ export async function upsertCorretorEndereco(
 
     return { success: true };
   } catch (err) {
-    console.error('[upsertCorretorEndereco]', err);
+    logger.error('[upsertCorretorEndereco]', err);
     return { success: false, error: 'Erro ao salvar endereço' };
   }
 }
@@ -325,7 +326,7 @@ export async function deleteCorretorEndereco(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[deleteCorretorEndereco]', err);
+    logger.error('[deleteCorretorEndereco]', err);
     return { success: false, error: 'Erro ao excluir endereço' };
   }
 }
@@ -353,7 +354,7 @@ export async function getCorretorTelefones(
     if (error) throw error;
     return { success: true, data: data ?? [] };
   } catch (err) {
-    console.error('[getCorretorTelefones]', err);
+    logger.error('[getCorretorTelefones]', err);
     return { success: false, error: 'Erro ao carregar telefones' };
   }
 }
@@ -393,7 +394,7 @@ export async function upsertCorretorTelefone(
 
     return { success: true };
   } catch (err) {
-    console.error('[upsertCorretorTelefone]', err);
+    logger.error('[upsertCorretorTelefone]', err);
     return { success: false, error: 'Erro ao salvar telefone' };
   }
 }
@@ -407,7 +408,7 @@ export async function deleteCorretorTelefone(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[deleteCorretorTelefone]', err);
+    logger.error('[deleteCorretorTelefone]', err);
     return { success: false, error: 'Erro ao excluir telefone' };
   }
 }
@@ -448,7 +449,7 @@ export async function getCorretorCompleto(corretorId: string): Promise<{
       },
     };
   } catch (err) {
-    console.error('[getCorretorCompleto]', err);
+    logger.error('[getCorretorCompleto]', err);
     return { success: false, error: 'Erro ao carregar dados do corretor' };
   }
 }
@@ -468,7 +469,7 @@ export async function updateCorretorPerfil(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[updateCorretorPerfil]', err);
+    logger.error('[updateCorretorPerfil]', err);
     return { success: false, error: 'Erro ao atualizar perfil' };
   }
 }

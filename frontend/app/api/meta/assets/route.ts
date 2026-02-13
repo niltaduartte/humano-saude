@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { isMetaConfigured, getMetaConfig } from '@/lib/ads/meta-client';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Erro ao buscar assets:', error);
+    logger.error('❌ Erro ao buscar assets:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

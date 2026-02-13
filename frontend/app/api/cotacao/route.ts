@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 const PYTHON_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('❌ Erro no proxy cotação:', error);
+    logger.error('❌ Erro no proxy cotação:', error);
     return NextResponse.json(
       { error: 'Erro interno ao calcular cotação' },
       { status: 500 }
@@ -53,7 +54,7 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('❌ Erro ao buscar operadoras:', error);
+    logger.error('❌ Erro ao buscar operadoras:', error);
     return NextResponse.json(
       { error: 'Backend Python indisponível' },
       { status: 503 }

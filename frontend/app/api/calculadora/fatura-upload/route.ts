@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,13 +29,13 @@ export async function POST(req: NextRequest) {
       });
 
     if (uploadError) {
-      console.error('[Fatura Upload] Erro:', uploadError);
+      logger.error('[Fatura Upload] Erro:', uploadError);
       return NextResponse.json({ success: false, error: uploadError.message }, { status: 500 });
     }
 
     const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
 
-    console.log(`✅ Fatura upload: ${path} → ${urlData.publicUrl}`);
+    logger.info(`✅ Fatura upload: ${path} → ${urlData.publicUrl}`);
 
     return NextResponse.json({
       success: true,
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
       path,
     });
   } catch (err: unknown) {
-    console.error('[Fatura Upload] Erro inesperado:', err);
+    logger.error('[Fatura Upload] Erro inesperado:', err);
     return NextResponse.json(
       { success: false, error: 'Erro interno ao fazer upload da fatura' },
       { status: 500 }

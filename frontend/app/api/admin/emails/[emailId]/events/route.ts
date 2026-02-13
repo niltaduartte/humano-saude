@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmailEvents } from '@/lib/email-tracking';
+import { logger } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -26,7 +27,7 @@ export async function GET(
       total: events.length,
     });
   } catch (err) {
-    console.error('[api/admin/emails/events] Error:', err);
+    logger.error('[api/admin/emails/events] Error:', err);
     return NextResponse.json(
       { success: false, error: 'Erro ao buscar eventos' },
       { status: 500 }

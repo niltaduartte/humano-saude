@@ -5,6 +5,7 @@
 
 import { createServiceClient } from './supabase';
 import type { MetaDatePreset } from './ads/types';
+import { logger } from '@/lib/logger';
 
 const META_API_VERSION = 'v21.0';
 
@@ -108,7 +109,7 @@ export async function getMarketingInsights(
     const data = await response.json();
 
     if (!response.ok || data.error) {
-      console.error('❌ Meta Insights Error:', data.error?.message);
+      logger.error('❌ Meta Insights Error:', data.error?.message);
       return { metrics: emptyMetrics(), campaigns: [] };
     }
 
@@ -118,7 +119,7 @@ export async function getMarketingInsights(
 
     return { metrics, campaigns };
   } catch (error) {
-    console.error('❌ Erro ao buscar insights:', error);
+    logger.error('❌ Erro ao buscar insights:', error);
     return { metrics: emptyMetrics(), campaigns: [] };
   }
 }

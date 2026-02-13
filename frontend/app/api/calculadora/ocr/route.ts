@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { VertexAI } from '@google-cloud/vertexai';
+import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
 
@@ -18,7 +19,7 @@ function getVertexAI() {
   const projectId = credentials.project_id; // gen-lang-client-0591725975 (Vertex AI ativo)
   const clientEmail = credentials.client_email;
 
-  console.log(`[AUDITORIA IA] Modelo: ${VERTEX_MODEL} | Projeto: ${projectId} | SA: ${clientEmail} | Location: ${VERTEX_LOCATION}`);
+  logger.info(`[AUDITORIA IA] Modelo: ${VERTEX_MODEL} | Projeto: ${projectId} | SA: ${clientEmail} | Location: ${VERTEX_LOCATION}`);
 
   return new VertexAI({
     project: projectId,
@@ -110,7 +111,7 @@ async function withRetry<T>(
       }
 
       const delay = initialDelayMs * Math.pow(2, attempt);
-      console.log(`[OCR] ⏳ Erro 429/503, retry em ${delay}ms (tentativa ${attempt + 1}/${maxRetries})...`);
+      logger.info(`[OCR] ⏳ Erro 429/503, retry em ${delay}ms (tentativa ${attempt + 1}/${maxRetries})...`);
       await new Promise((r) => setTimeout(r, delay));
     }
   }
@@ -129,8 +130,8 @@ export async function POST(request: NextRequest) {
     }
 
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    console.log(`[OCR] ═══════════════════════════════════════`);
-    console.log(`[OCR] Arquivo: ${file.name}, type: ${file.type}, size: ${fileSizeMB}MB`);
+    logger.info(`[OCR] ═══════════════════════════════════════`);
+    logger.info(`[OCR] Arquivo: ${file.name}, type: ${file.type}, size: ${fileSizeMB}MB`);
 
     const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     const isImage = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(file.type);
@@ -163,7 +164,7 @@ export async function POST(request: NextRequest) {
     // ═══ CONVERTER PARA BASE64 ═══
     const bytes = await file.arrayBuffer();
     const base64Data = Buffer.from(bytes).toString('base64');
-    console.log(`[OCR] Base64 gerado: ${(base64Data.length / 1024).toFixed(0)}KB`);
+    logger.info(`[OCR] Base64 gerado: ${(base64Data.length / 1024).toFixed(0)}KB`);
 
     // ═══ VERTEX AI (Projeto Adaga Braca com créditos GCP R$1.700) ═══
     const vertexAI = getVertexAI();
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`[OCR] Enviando para Vertex AI (${VERTEX_MODEL}) com retry...`);
+    logger.info(`[OCR] Enviando para Vertex AI (${VERTEX_MODEL}) com retry...`);
 
     const text = await withRetry(async () => {
       const result = await model.generateContent({
@@ -214,14 +215,14 @@ export async function POST(request: NextRequest) {
     });
 
     // ═══ LOG DA RESPOSTA BRUTA ═══
-    console.log(`[OCR] ═══ RESPOSTA BRUTA DO GEMINI (VERTEX AI) ═══`);
-    console.log(text);
-    console.log(`[OCR] ═══ FIM DA RESPOSTA BRUTA ═══`);
+    logger.info(`[OCR] ═══ RESPOSTA BRUTA DO GEMINI (VERTEX AI) ═══`);
+    logger.info(text);
+    logger.info(`[OCR] ═══ FIM DA RESPOSTA BRUTA ═══`);
 
     // ═══ DETECÇÃO DE HTML (endpoint errado / auth redirect) ═══
     if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('<HTML')) {
-      console.error(`[AUDITORIA IA] ⚠️ API RETORNOU HTML! Endpoint incorreto ou redirect de auth.`);
-      console.error(`[AUDITORIA IA] Primeiros 300 chars: ${text.substring(0, 300)}`);
+      logger.error(`[AUDITORIA IA] ⚠️ API RETORNOU HTML! Endpoint incorreto ou redirect de auth.`);
+      logger.error(`[AUDITORIA IA] Primeiros 300 chars: ${text.substring(0, 300)}`);
       return NextResponse.json({
         success: false,
         error: 'Erro de configuração do servidor. Contate o suporte.',
@@ -238,11 +239,10 @@ export async function POST(request: NextRequest) {
     // ═══ PARSEAR JSON ═══
     try {
       const dados = parseResponse(text);
-      console.log('[OCR] ✅ DADOS EXTRAÍDOS:', JSON.stringify(dados, null, 2));
+      logger.info('[OCR] DADOS EXTRAÍDOS', { dados });
       return NextResponse.json({ success: true, dados });
     } catch (parseErr) {
-      console.error('[OCR] ❌ Erro ao parsear JSON:', parseErr);
-      console.error('[OCR] Resposta bruta era:', text.substring(0, 500));
+      logger.error('[OCR] Erro ao parsear JSON', parseErr, { rawText: text.substring(0, 500) });
       return NextResponse.json({
         success: false,
         error: 'Não foi possível extrair os dados. Preencha manualmente.',
@@ -251,13 +251,13 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Erro interno';
     const errorStr = String(err);
-    console.error('[OCR] ❌ Erro:', errorMsg);
+    logger.error('[OCR] ❌ Erro:', errorMsg);
 
     // Detecção de HTML no erro (endpoint inválido retorna HTML)
     if (errorMsg.includes('<!DOCTYPE') || errorMsg.includes('<html') || errorStr.includes('<!DOCTYPE')) {
-      console.error(`[AUDITORIA IA] ⚠️ RESPOSTA HTML DETECTADA NO ERRO!`);
-      console.error(`[AUDITORIA IA] Isso indica endpoint incorreto. Verifique VERTEX_LOCATION e VERTEX_MODEL.`);
-      console.error(`[AUDITORIA IA] Location atual: ${VERTEX_LOCATION} | Modelo: ${VERTEX_MODEL}`);
+      logger.error(`[AUDITORIA IA] ⚠️ RESPOSTA HTML DETECTADA NO ERRO!`);
+      logger.error(`[AUDITORIA IA] Isso indica endpoint incorreto. Verifique VERTEX_LOCATION e VERTEX_MODEL.`);
+      logger.error(`[AUDITORIA IA] Location atual: ${VERTEX_LOCATION} | Modelo: ${VERTEX_MODEL}`);
     }
 
     let userMsg = 'Não conseguimos processar o arquivo. Preencha os dados manualmente.';
@@ -266,16 +266,16 @@ export async function POST(request: NextRequest) {
     } else if (errorMsg.includes('too large') || errorMsg.includes('size')) {
       userMsg = 'Arquivo muito grande. Tire um print da fatura e envie como imagem.';
     } else if (errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
-      console.error(`[AUDITORIA IA] ⚠️ ERRO 429 RESOURCE_EXHAUSTED após todas as tentativas de retry!`);
-      console.error(`[AUDITORIA IA] Modelo: ${VERTEX_MODEL} | Isso NÃO deveria acontecer com faturamento ativo.`);
-      console.error(`[AUDITORIA IA] Checklist: 1) Vertex AI API ativa? 2) Cota do projeto no GCP Console? 3) Billing vinculado?`);
+      logger.error(`[AUDITORIA IA] ⚠️ ERRO 429 RESOURCE_EXHAUSTED após todas as tentativas de retry!`);
+      logger.error(`[AUDITORIA IA] Modelo: ${VERTEX_MODEL} | Isso NÃO deveria acontecer com faturamento ativo.`);
+      logger.error(`[AUDITORIA IA] Checklist: 1) Vertex AI API ativa? 2) Cota do projeto no GCP Console? 3) Billing vinculado?`);
       userMsg = 'Sistema temporariamente ocupado. Tente novamente em 30 segundos.';
     } else if (errorMsg.includes('GOOGLE_SERVICE_ACCOUNT_JSON')) {
       userMsg = 'Erro de configuração do servidor. Contate o suporte.';
-      console.error('[AUDITORIA IA] ⚠️ GOOGLE_SERVICE_ACCOUNT_JSON não está configurada!');
+      logger.error('[AUDITORIA IA] ⚠️ GOOGLE_SERVICE_ACCOUNT_JSON não está configurada!');
     } else if (errorMsg.includes('PERMISSION_DENIED') || errorMsg.includes('403')) {
-      console.error(`[AUDITORIA IA] ⚠️ ERRO 403 PERMISSION_DENIED!`);
-      console.error(`[AUDITORIA IA] A Service Account não tem papel "Usuário do Vertex AI" no projeto.`);
+      logger.error(`[AUDITORIA IA] ⚠️ ERRO 403 PERMISSION_DENIED!`);
+      logger.error(`[AUDITORIA IA] A Service Account não tem papel "Usuário do Vertex AI" no projeto.`);
       userMsg = 'Erro de permissão no servidor. Contate o suporte.';
     }
 

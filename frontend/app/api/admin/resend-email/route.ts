@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmailDetail, logEmailToDb, updateEmailLog, injectTrackingPixel } from '@/lib/email-tracking';
 import { _getResend } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('[resend-email] Resend API error:', error);
+      logger.error('[resend-email] Resend API error:', error);
       if (newLogId) {
         await updateEmailLog(newLogId, {
           status: 'failed',
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log('[resend-email] Email resent:', original.subject, '→', original.to_email, data?.id);
+    logger.info('[resend-email] Email resent', { subject: original.subject, to: original.to_email, id: data?.id });
 
     return NextResponse.json({
       success: true,
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('[resend-email] Error:', err);
+    logger.error('[resend-email] Error:', err);
     return NextResponse.json(
       { success: false, error: 'Erro ao reenviar email' },
       { status: 500 }

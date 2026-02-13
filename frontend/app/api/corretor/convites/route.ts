@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createServiceClient();
 
 // Garantir que a tabela existe
 async function ensureTable() {
@@ -42,7 +40,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[convites] Erro ao listar:', error);
+      logger.error('[convites] Erro ao listar:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -75,7 +73,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ convites: convitesEnriquecidos });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[convites] erro:', msg);
+    logger.error('[convites] erro:', msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

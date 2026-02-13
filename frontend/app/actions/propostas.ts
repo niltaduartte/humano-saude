@@ -7,6 +7,7 @@ import type {
   PropostaUpdate,
   PropostaStatus,
 } from '@/lib/types/database';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -38,7 +39,7 @@ export async function getPropostas(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar propostas:', error);
+      logger.error('❌ Erro ao buscar propostas:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -82,7 +83,7 @@ export async function createProposta(input: PropostaInsert) {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao criar proposta:', error);
+      logger.error('❌ Erro ao criar proposta:', error);
       return { success: false, data: null, error: error.message };
     }
 

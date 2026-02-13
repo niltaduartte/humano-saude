@@ -12,6 +12,7 @@ import type {
   UserSettings,
   AuditActionType,
 } from '@/lib/types/ai-performance';
+import { logger } from '@/lib/logger';
 
 // =====================================================
 // SETTINGS DEFAULT
@@ -93,7 +94,7 @@ async function fetchCampaignInsightsFromMeta(
       };
     });
   } catch (error) {
-    console.error('❌ Erro ao buscar insights da Meta:', error);
+    logger.error('❌ Erro ao buscar insights da Meta:', error);
     return [];
   }
 }
@@ -157,7 +158,7 @@ export class AdsAuditor {
           const customRecs = this.applyCustomRules(campaign);
           recommendations.push(...customRecs);
         } catch (error) {
-          console.error(`❌ Erro ao auditar ${campaign.campaign_name}:`, error);
+          logger.error(`❌ Erro ao auditar ${campaign.campaign_name}:`, error);
           errorsCount++;
         }
       }
@@ -396,7 +397,7 @@ export class AdsAuditor {
         };
       }
     } catch {
-      console.warn('⚠️ Usando settings padrão');
+      logger.warn('⚠️ Usando settings padrão');
     }
   }
 
@@ -422,7 +423,7 @@ export class AdsAuditor {
         }));
       }
     } catch {
-      console.warn('⚠️ Sem regras custom no banco');
+      logger.warn('⚠️ Sem regras custom no banco');
     }
   }
 
@@ -450,7 +451,7 @@ export class AdsAuditor {
         frequency: campaign.frequency,
       }, { onConflict: 'meta_campaign_id,date_start,date_stop,snapshot_hour' });
     } catch (error) {
-      console.error('❌ Erro ao salvar snapshot:', error);
+      logger.error('❌ Erro ao salvar snapshot:', error);
     }
   }
 
@@ -472,7 +473,7 @@ export class AdsAuditor {
 
       await this.supabase.from('ads_recommendations').insert(rows);
     } catch (error) {
-      console.error('❌ Erro ao salvar recomendações:', error);
+      logger.error('❌ Erro ao salvar recomendações:', error);
     }
   }
 

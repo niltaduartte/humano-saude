@@ -18,6 +18,7 @@ import {
   generateAlerts,
   DEFAULT_BENCHMARKS,
 } from '@/lib/consolidator';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,7 +86,7 @@ async function fetchMetaInsights(
   const data = await res.json();
 
   if (!res.ok || data.error) {
-    console.error('❌ Meta Insights Error:', data.error?.message);
+    logger.error('❌ Meta Insights Error:', data.error?.message);
     return [];
   }
 
@@ -280,7 +281,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('❌ Cockpit API Error:', error);
+    logger.error('❌ Cockpit API Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

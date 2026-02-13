@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import {
   fetchDashboardMetrics,
   fetchOperationalHealth,
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       data: { metrics, chartData, funnelData, operationalHealth },
     });
   } catch (error) {
-    console.error('❌ Admin Dashboard Error:', error);
+    logger.error('Admin Dashboard Error', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

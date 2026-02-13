@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optimizeCampaigns } from '@/lib/ads/optimize-campaigns';
 import { isMetaConfigured } from '@/lib/ads/meta-client';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Erro na otimização:', error);
+    logger.error('❌ Erro na otimização:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

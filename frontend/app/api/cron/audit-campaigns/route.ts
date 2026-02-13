@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AdsAuditor } from '@/lib/services/ads-auditor';
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // 60s max
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     const auditor = new AdsAuditor(accessToken, adAccountId);
     const result = await auditor.runAudit();
 
-    console.log(
+    logger.info(
       `✅ Cron Audit: ${result.campaigns_analyzed} campaigns, ` +
       `${result.recommendations.length} recommendations, ` +
       `${result.alerts_generated} alerts`
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('❌ Cron Audit Error:', error);
+    logger.error('❌ Cron Audit Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Erro no audit' },
       { status: 500 }

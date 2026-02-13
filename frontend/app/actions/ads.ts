@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -25,7 +26,7 @@ export async function getAdsCampaigns(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar campanhas:', error);
+      logger.error('❌ Erro ao buscar campanhas:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -58,7 +59,7 @@ export async function getAdsCreatives(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar criativos:', error);
+      logger.error('❌ Erro ao buscar criativos:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -81,7 +82,7 @@ export async function getAdsAudiences() {
       .order('total_conversions', { ascending: false });
 
     if (error) {
-      console.error('❌ Erro ao buscar públicos:', error);
+      logger.error('❌ Erro ao buscar públicos:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -145,7 +146,7 @@ export async function getAnaliseCampanhas() {
       .select('*');
 
     if (error) {
-      console.error('❌ Erro ao buscar análise campanhas:', error);
+      logger.error('❌ Erro ao buscar análise campanhas:', error);
       return { success: false, data: [], error: error.message };
     }
 

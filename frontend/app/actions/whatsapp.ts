@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -39,7 +40,7 @@ export async function getWhatsAppContacts(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar contatos WhatsApp:', error);
+      logger.error('❌ Erro ao buscar contatos WhatsApp:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -64,7 +65,7 @@ export async function getWhatsAppMessages(contactId: string, limit = 50) {
       .limit(limit);
 
     if (error) {
-      console.error('❌ Erro ao buscar mensagens:', error);
+      logger.error('❌ Erro ao buscar mensagens:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -114,7 +115,7 @@ export async function sendWhatsAppMessage(phone: string, content: string) {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao salvar mensagem:', error);
+      logger.error('❌ Erro ao salvar mensagem:', error);
       return { success: false, error: error.message };
     }
 

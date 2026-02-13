@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { logger } from '@/lib/logger';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.OPENAI_API_KEY) {
       // Se não tem API key, aceita qualquer documento (fallback)
-      console.warn('[validar-documento] OPENAI_API_KEY não configurada, aceitando documento');
+      logger.warn('[validar-documento] OPENAI_API_KEY não configurada, aceitando documento');
       return NextResponse.json({ valid: true, message: 'Validação indisponível — documento aceito' });
     }
 
@@ -103,13 +104,13 @@ Responda APENAS com um JSON no formato: {"valido": true/false, "motivo": "explic
         });
       }
     } catch {
-      console.error('[validar-documento] Erro ao parsear resposta:', content);
+      logger.error('[validar-documento] Erro ao parsear resposta:', content);
     }
 
     // Se não conseguiu parsear, aceitar (fail-open)
     return NextResponse.json({ valid: true, message: 'Validação inconclusiva — documento aceito' });
   } catch (err) {
-    console.error('[validar-documento] Erro:', err);
+    logger.error('[validar-documento] Erro:', err);
     // Em caso de erro, aceitar o documento (fail-open para não bloquear o usuário)
     return NextResponse.json({ valid: true, message: 'Erro na validação — documento aceito' });
   }

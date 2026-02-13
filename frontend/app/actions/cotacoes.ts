@@ -7,6 +7,7 @@ import type {
   CotacaoUpdate,
   CotacaoStatus,
 } from '@/lib/types/database';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -48,7 +49,7 @@ export async function getCotacoes(filters?: {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar cotações:', error);
+      logger.error('❌ Erro ao buscar cotações:', error);
       return { success: false, data: [], count: 0, error: error.message };
     }
 
@@ -98,7 +99,7 @@ export async function createCotacao(input: CotacaoInsert) {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao criar cotação:', error);
+      logger.error('❌ Erro ao criar cotação:', error);
       return { success: false, data: null, error: error.message };
     }
 

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listEmails, getEmailDetail, getEmailStats } from '@/lib/email-tracking';
 import type { ListEmailsParams, EmailStatus, EmailType } from '@/lib/types/email';
+import { logger } from '@/lib/logger';
 
 // ─── GET: List emails ────────────────────────────────────────
 export async function GET(request: NextRequest) {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     const result = await listEmails(params);
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
-    console.error('[api/admin/emails] GET error:', err);
+    logger.error('[api/admin/emails] GET error:', err);
     return NextResponse.json(
       { success: false, error: 'Erro ao buscar emails' },
       { status: 500 }
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: email });
   } catch (err) {
-    console.error('[api/admin/emails] POST error:', err);
+    logger.error('[api/admin/emails] POST error:', err);
     return NextResponse.json(
       { success: false, error: 'Erro ao buscar detalhes do email' },
       { status: 500 }

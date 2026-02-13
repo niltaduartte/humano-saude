@@ -9,6 +9,7 @@ import {
   recordEmailEvent,
 } from '@/lib/email-tracking';
 import type { ResendWebhookPayload } from '@/lib/types/email';
+import { logger } from '@/lib/logger';
 
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET || '';
 
@@ -16,7 +17,7 @@ const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET || '';
 function verifySignature(payload: string, signature: string | null): boolean {
   if (!WEBHOOK_SECRET || !signature) {
     // If no secret configured, skip verification (dev mode)
-    console.warn('[webhook/resend] No RESEND_WEBHOOK_SECRET — skipping signature verification');
+    logger.warn('[webhook/resend] No RESEND_WEBHOOK_SECRET — skipping signature verification');
     return !WEBHOOK_SECRET; // Allow if no secret set (dev), reject if secret set but no signature
   }
 
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Verify signature
     if (WEBHOOK_SECRET && !verifySignature(rawBody, signature)) {
-      console.error('[webhook/resend] Invalid signature');
+      logger.error('[webhook/resend] Invalid signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -74,14 +75,14 @@ export async function POST(request: NextRequest) {
     const eventType = mapEventType(type);
     const resendId = data.email_id;
 
-    console.log(`[webhook/resend] Event: ${eventType} for email ${resendId}`);
+    logger.info(`[webhook/resend] Event: ${eventType} for email ${resendId}`);
 
     // Find the email_log by Resend ID
     const emailLog = await findEmailByResendId(resendId);
 
     if (!emailLog) {
       // Email not tracked in our system — could be from direct Resend API usage
-      console.warn(`[webhook/resend] Email not found for resend_id: ${resendId}`);
+      logger.warn(`[webhook/resend] Email not found for resend_id: ${resendId}`);
       // Still return 200 to acknowledge the webhook
       return NextResponse.json({ received: true, tracked: false });
     }
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true, tracked: true, emailLogId: emailLog.id });
   } catch (err) {
-    console.error('[webhook/resend] Error processing webhook:', err);
+    logger.error('[webhook/resend] Error processing webhook:', err);
     // Always return 200 to prevent Resend from retrying
     return NextResponse.json({ received: true, error: 'Processing error' }, { status: 200 });
   }

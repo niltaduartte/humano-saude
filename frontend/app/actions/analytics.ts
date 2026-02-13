@@ -1,6 +1,7 @@
 'use server';
 
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 // ========================================
 // VISITAS - ANALYTICS
@@ -26,7 +27,7 @@ export async function getAnalyticsVisits(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar analytics:', error);
+      logger.error('❌ Erro ao buscar analytics:', error);
       return { success: false, data: [], error: error.message };
     }
 

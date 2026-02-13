@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 // =====================================================
 // GA4 CONNECTOR — Google Analytics 4 Data API
 // Busca métricas de tráfego, realtime, fontes, geo
@@ -51,7 +53,7 @@ async function getAccessToken(clientEmail: string, privateKey: string): Promise<
     // O SDK gerencia auth automaticamente
     return 'sdk-managed';
   } catch {
-    console.warn('⚠️ @google-analytics/data não instalado. GA4 indisponível.');
+    logger.warn('⚠️ @google-analytics/data não instalado. GA4 indisponível.');
     return '';
   }
 }
@@ -163,7 +165,7 @@ export async function fetchGA4TrafficData(
       dailyData,
     };
   } catch (error) {
-    console.error('❌ GA4 Traffic Error:', error);
+    logger.error('❌ GA4 Traffic Error:', error);
     return null;
   }
 }
@@ -205,7 +207,7 @@ export async function fetchGA4Sources(
       };
     });
   } catch (error) {
-    console.error('❌ GA4 Sources Error:', error);
+    logger.error('❌ GA4 Sources Error:', error);
     return [];
   }
 }
@@ -247,7 +249,7 @@ export async function fetchGA4Realtime(): Promise<GA4RealtimeData | null> {
       })),
     };
   } catch (error) {
-    console.error('❌ GA4 Realtime Error:', error);
+    logger.error('❌ GA4 Realtime Error:', error);
     return null;
   }
 }

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createServiceClient();
 
 const WA_VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'humano_saude_wa_2026';
 
@@ -19,7 +17,7 @@ export async function GET(request: NextRequest) {
   const challenge = searchParams.get('hub.challenge');
 
   if (mode === 'subscribe' && token === WA_VERIFY_TOKEN) {
-    console.log('✅ WhatsApp webhook verificado');
+    logger.info('WhatsApp webhook verificado');
     return new NextResponse(challenge, { status: 200 });
   }
 
@@ -67,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ status: 'ok' });
   } catch (error) {
-    console.error('❌ Erro no webhook WhatsApp:', error);
+    logger.error('Erro no webhook WhatsApp', error);
     return NextResponse.json({ status: 'error_logged' });
   }
 }
@@ -133,10 +131,10 @@ async function processIncomingMessage(
     });
 
     if (error) {
-      console.error('❌ Erro ao salvar mensagem WhatsApp:', error);
+      logger.error('Erro ao salvar mensagem WhatsApp', error, { phone });
     }
   } catch (error) {
-    console.error('❌ Erro processando mensagem:', error);
+    logger.error('Erro processando mensagem WA', error);
   }
 }
 
@@ -164,9 +162,9 @@ async function processMessageStatus(status: Record<string, unknown>) {
       .eq('wa_message_id', waMessageId);
 
     if (error) {
-      console.error('❌ Erro ao atualizar status mensagem:', error);
+      logger.error('Erro ao atualizar status mensagem WA', error, { wa_message_id: waMessageId });
     }
   } catch (error) {
-    console.error('❌ Erro processando status:', error);
+    logger.error('Erro processando status WA', error);
   }
 }

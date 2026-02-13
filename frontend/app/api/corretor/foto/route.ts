@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
-
-// ─── Helper: extrair corretor_id do cookie ─────────────────
-function getCorretorIdFromCookie(request: NextRequest): string | null {
-  const token = request.cookies.get('corretor_token')?.value;
-  if (!token) return null;
-  try {
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (decoded.exp && decoded.exp < Date.now()) return null;
-    return decoded.id || null;
-  } catch {
-    return null;
-  }
-}
+import { getCorretorIdFromRequest } from '@/lib/auth-jwt';
+import { logger } from '@/lib/logger';
 
 // ─── POST: Upload de foto do corretor ───────────────────────
 export async function POST(request: NextRequest) {
   try {
-    const corretorId = getCorretorIdFromCookie(request);
+    const corretorId = await getCorretorIdFromRequest(request);
     if (!corretorId) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
@@ -60,7 +49,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error('[foto upload]', uploadError);
+      logger.error('Erro upload foto', uploadError, { corretor_id: corretorId });
       return NextResponse.json({ error: 'Erro ao fazer upload' }, { status: 500 });
     }
 
@@ -78,13 +67,13 @@ export async function POST(request: NextRequest) {
       .eq('id', corretorId);
 
     if (updateError) {
-      console.error('[foto update]', updateError);
+      logger.error('Erro ao salvar URL da foto', updateError, { corretor_id: corretorId });
       return NextResponse.json({ error: 'Erro ao salvar URL da foto' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, foto_url: fotoUrl });
   } catch (err) {
-    console.error('[foto POST]', err);
+    logger.error('Erro no foto POST', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
@@ -92,7 +81,7 @@ export async function POST(request: NextRequest) {
 // ─── DELETE: Remover foto do corretor ───────────────────────
 export async function DELETE(request: NextRequest) {
   try {
-    const corretorId = getCorretorIdFromCookie(request);
+    const corretorId = await getCorretorIdFromRequest(request);
     if (!corretorId) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
@@ -106,13 +95,13 @@ export async function DELETE(request: NextRequest) {
       .eq('id', corretorId);
 
     if (error) {
-      console.error('[foto delete]', error);
+      logger.error('Erro ao remover foto', error, { corretor_id: corretorId });
       return NextResponse.json({ error: 'Erro ao remover foto' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('[foto DELETE]', err);
+    logger.error('Erro no foto DELETE', err);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

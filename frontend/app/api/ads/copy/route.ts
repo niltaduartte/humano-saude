@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateAdCopy, generateCopiesForImages } from '@/lib/ads/copy-generator';
 import { generateCopywritingPrompt } from '@/lib/ads/prompt-generator';
 import type { CampaignObjectiveKey, FunnelStage } from '@/lib/ads/types';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
       copy,
     });
   } catch (error) {
-    console.error('❌ Erro na geração de copy:', error);
+    logger.error('❌ Erro na geração de copy:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

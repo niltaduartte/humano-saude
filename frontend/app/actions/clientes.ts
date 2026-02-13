@@ -2,6 +2,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 const PORTAL = '/portal-interno-hks-2026';
 
@@ -37,7 +38,7 @@ export async function getClientes(filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ Erro ao buscar clientes:', error);
+      logger.error('❌ Erro ao buscar clientes:', error);
       return { success: false, data: [], error: error.message };
     }
 
@@ -128,7 +129,7 @@ export async function getPipeline() {
       .select('*');
 
     if (error) {
-      console.error('❌ Erro ao buscar pipeline:', error);
+      logger.error('❌ Erro ao buscar pipeline:', error);
       return { success: false, data: [], error: error.message };
     }
 

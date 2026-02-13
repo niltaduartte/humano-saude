@@ -2,6 +2,7 @@
 
 import { createServiceClient } from '@/lib/supabase';
 import { enviarEmailAprovacao } from '@/lib/email';
+import { logger } from '@/lib/logger';
 
 export interface SolicitacaoCorretor {
   id: string;
@@ -63,7 +64,7 @@ export async function getSolicitacoes(status?: string): Promise<{
 
     return { success: true, data: data as SolicitacaoCorretor[] };
   } catch (err) {
-    console.error('[getSolicitacoes]', err);
+    logger.error('[getSolicitacoes]', err);
     return { success: false, error: 'Erro ao buscar solicitações' };
   }
 }
@@ -142,7 +143,7 @@ export async function aprovarSolicitacao(
       .single();
 
     if (insertErr) {
-      console.error('[aprovarSolicitacao] insert corretor', insertErr);
+      logger.error('[aprovarSolicitacao] insert corretor', insertErr);
       return { success: false, error: 'Erro ao criar corretor' };
     }
 
@@ -157,7 +158,7 @@ export async function aprovarSolicitacao(
       .eq('id', solicitacaoId);
 
     if (updateErr) {
-      console.error('[aprovarSolicitacao] update status', updateErr);
+      logger.error('[aprovarSolicitacao] update status', updateErr);
     }
 
     // 5. Enviar email de aprovação com dados de acesso + link de onboarding
@@ -173,12 +174,12 @@ export async function aprovarSolicitacao(
         senhaTemporaria,
       });
     } catch (emailErr) {
-      console.error('[aprovarSolicitacao] email error (non-critical):', emailErr);
+      logger.error('[aprovarSolicitacao] email error (non-critical):', emailErr);
     }
 
     return { success: true, onboardingToken };
   } catch (err) {
-    console.error('[aprovarSolicitacao]', err);
+    logger.error('[aprovarSolicitacao]', err);
     return { success: false, error: 'Erro ao aprovar solicitação' };
   }
 }
@@ -203,7 +204,7 @@ export async function rejeitarSolicitacao(
 
     return { success: true };
   } catch (err) {
-    console.error('[rejeitarSolicitacao]', err);
+    logger.error('[rejeitarSolicitacao]', err);
     return { success: false, error: 'Erro ao rejeitar solicitação' };
   }
 }
@@ -225,7 +226,7 @@ export async function getTermosAceites(): Promise<{
 
     return { success: true, data: data as TermoAceite[] };
   } catch (err) {
-    console.error('[getTermosAceites]', err);
+    logger.error('[getTermosAceites]', err);
     return { success: false, error: 'Erro ao buscar aceites de termos' };
   }
 }
@@ -250,7 +251,7 @@ export async function getTermosAceitesBySolicitacao(
 
     return { success: true, data: data as TermoAceite[] };
   } catch (err) {
-    console.error('[getTermosAceitesBySolicitacao]', err);
+    logger.error('[getTermosAceitesBySolicitacao]', err);
     return { success: false, error: 'Erro ao buscar aceites' };
   }
 }

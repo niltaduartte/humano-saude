@@ -10,6 +10,7 @@ import {
   deleteAdRule,
 } from '@/lib/ads/ad-rules';
 import { isMetaConfigured, getMetaConfig } from '@/lib/ads/meta-client';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,7 @@ export async function GET() {
       total: rules.length,
     });
   } catch (error) {
-    console.error('❌ Erro ao listar regras:', error);
+    logger.error('❌ Erro ao listar regras:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
@@ -59,7 +60,7 @@ export async function POST() {
       ...results,
     });
   } catch (error) {
-    console.error('❌ Erro ao criar regras:', error);
+    logger.error('❌ Erro ao criar regras:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
@@ -90,7 +91,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, ruleId });
   } catch (error) {
-    console.error('❌ Erro ao deletar regra:', error);
+    logger.error('❌ Erro ao deletar regra:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }

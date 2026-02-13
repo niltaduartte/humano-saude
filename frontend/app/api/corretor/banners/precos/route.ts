@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabase = createServiceClient();
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -23,7 +21,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (error) {
-    console.error('[Precos] RPC error:', error.message);
+    logger.error('[Precos] RPC error:', error.message);
     // Fallback: query direct
     const { data: plano } = await supabase
       .from('planos_operadora')

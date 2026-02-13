@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -13,7 +14,7 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (corretoresErr) {
-      console.error('[corretores-docs] Error fetching corretores:', corretoresErr);
+      logger.error('[corretores-docs] Error fetching corretores:', corretoresErr);
       return NextResponse.json(
         { success: false, error: corretoresErr.message },
         { status: 500 },
@@ -101,7 +102,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: comDados });
   } catch (err) {
-    console.error('[corretores-docs] Unexpected error:', err);
+    logger.error('[corretores-docs] Unexpected error:', err);
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 },

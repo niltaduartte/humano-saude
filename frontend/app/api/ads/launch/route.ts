@@ -18,6 +18,7 @@ import { getOptimizationConfig, getRecommendedCTA } from '@/lib/ads/optimization
 import { generateAdCopy } from '@/lib/ads/copy-generator';
 import { getFunnelStrategy, buildStrategyTargeting, calculateAdjustedBudget } from '@/lib/ads/funnel-strategy';
 import type { FunnelStage, CampaignObjectiveKey, MetaCampaignObjective } from '@/lib/ads/types';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
           headline = generated.headlines[0] || headline;
         }
       } catch (err) {
-        console.warn('⚠️ Falha na geração de copy:', err);
+        logger.warn('Falha na geração de copy', { error: err instanceof Error ? err.message : String(err) });
       }
     }
 
@@ -246,7 +247,7 @@ export async function POST(request: NextRequest) {
         launched_at: new Date().toISOString(),
       });
     } catch (dbError) {
-      console.warn('⚠️ Campanha criada mas falha ao salvar log:', dbError);
+      logger.warn('Campanha criada mas falha ao salvar log', { error: dbError instanceof Error ? dbError.message : String(dbError) });
     }
 
     // ─── 10. Resposta ───
@@ -267,7 +268,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('❌ Erro no launch:', error);
+    logger.error('❌ Erro no launch:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno do servidor' },
       { status: 500 }

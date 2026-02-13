@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabase = createServiceClient();
 
 // ─── Mapa de faixas ANS para idade média ──────────
 const FAIXA_PARA_IDADE: Record<string, number> = {
@@ -113,7 +111,7 @@ export async function POST(request: NextRequest) {
       .order('operadora_nome', { ascending: true });
 
     if (error) {
-      console.error('[Simular] DB error:', error.message);
+      logger.error('[Simular] DB error:', error.message);
     }
 
     // Também buscar da tabela planos_saude (legacy)
@@ -317,7 +315,7 @@ export async function POST(request: NextRequest) {
       modalidade,
     });
   } catch (err) {
-    console.error('[Simular] Erro:', err);
+    logger.error('[Simular] Erro:', err);
     return NextResponse.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 }

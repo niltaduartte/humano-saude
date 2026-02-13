@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { recordEmailEvent } from '@/lib/email-tracking';
+import { logger } from '@/lib/logger';
 
 // 1x1 transparent PNG (68 bytes)
 const TRANSPARENT_PIXEL = Buffer.from(
@@ -44,7 +45,7 @@ export async function GET(
       userAgent,
       occurredAt: new Date().toISOString(),
     }).catch((err) => {
-      console.error('[track/email] Failed to record open event:', err);
+      logger.error('[track/email] Failed to record open event:', err);
     });
   }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { logger } from '@/lib/logger';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
@@ -97,13 +98,13 @@ Regras: varie bastante, use gatilhos emocionais, NAO use VAGAS/MATRICULA/INSCRIC
     }
 
     /* Se falhou 2x, retorna fallback aleatório */
-    console.warn('[AI Angulo] Fallback usado após erro:', lastError);
+    logger.warn('[AI Angulo] Fallback usado após erro', { error: lastError });
     const fb = getRandomFallback(angulo.id || 'economia');
     return NextResponse.json({ success: true, ...fb });
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[AI Angulo] Error:', msg);
+    logger.error('[AI Angulo] Error:', msg);
     /* Mesmo em erro total, retorna fallback para não quebrar a UX */
     const fb = getRandomFallback('economia');
     return NextResponse.json({ success: true, ...fb });

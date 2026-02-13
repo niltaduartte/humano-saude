@@ -3,6 +3,7 @@
 import { createServiceClient } from '@/lib/supabase';
 import type { CorretorDashboard, Renovacao, RenovacaoUpdate } from '@/lib/types/corretor';
 import type { Comissao } from '@/lib/types/database';
+import { logger } from '@/lib/logger';
 
 // ========================================
 // DASHBOARD DO CORRETOR
@@ -25,7 +26,7 @@ export async function getCorretorDashboard(corretorId: string): Promise<{
     if (error) throw error;
     return { success: true, data };
   } catch (err) {
-    console.error('[getCorretorDashboard]', err);
+    logger.error('[getCorretorDashboard]', err);
     return { success: false, error: 'Erro ao carregar dashboard' };
   }
 }
@@ -65,7 +66,7 @@ export async function getComissoes(
 
     return { success: true, data: data ?? [] };
   } catch (err) {
-    console.error('[getComissoes]', err);
+    logger.error('[getComissoes]', err);
     return { success: false, error: 'Erro ao carregar comissões' };
   }
 }
@@ -114,7 +115,7 @@ export async function getComissoesResumo(corretorId: string): Promise<{
 
     return { success: true, data: resumo };
   } catch (err) {
-    console.error('[getComissoesResumo]', err);
+    logger.error('[getComissoesResumo]', err);
     return { success: false, error: 'Erro ao carregar resumo' };
   }
 }
@@ -184,7 +185,7 @@ export async function getRenovacoes(
 
     return { success: true, data: enriched };
   } catch (err) {
-    console.error('[getRenovacoes]', err);
+    logger.error('[getRenovacoes]', err);
     return { success: false, error: 'Erro ao carregar renovações' };
   }
 }
@@ -204,7 +205,7 @@ export async function updateRenovacao(
     if (error) throw error;
     return { success: true };
   } catch (err) {
-    console.error('[updateRenovacao]', err);
+    logger.error('[updateRenovacao]', err);
     return { success: false, error: 'Erro ao atualizar renovação' };
   }
 }
@@ -249,7 +250,7 @@ export async function getMateriais(filtros?: {
 
     return { success: true, data: data ?? [] };
   } catch (err) {
-    console.error('[getMateriais]', err);
+    logger.error('[getMateriais]', err);
     return { success: false, error: 'Erro ao carregar materiais' };
   }
 }
@@ -290,7 +291,7 @@ export async function requestBanner(
 
     return { success: true, data };
   } catch (err) {
-    console.error('[requestBanner]', err);
+    logger.error('[requestBanner]', err);
     return { success: false, error: 'Erro ao solicitar banner' };
   }
 }
@@ -317,7 +318,7 @@ export async function getCorretorById(corretorId: string): Promise<{
     if (error) throw error;
     return { success: true, data };
   } catch (err) {
-    console.error('[getCorretorById]', err);
+    logger.error('[getCorretorById]', err);
     return { success: false, error: 'Corretor não encontrado' };
   }
 }

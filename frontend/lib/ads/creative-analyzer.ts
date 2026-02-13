@@ -5,6 +5,7 @@
 
 import OpenAI from 'openai';
 import { HUMANO_SAUDE_KNOWLEDGE } from '../humano-saude-knowledge';
+import { logger } from '@/lib/logger';
 
 // =====================================================
 // TIPOS INTERNOS
@@ -69,7 +70,7 @@ export interface BatchAnalysisResult {
 function getOpenAIClient(): OpenAI | null {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.warn('⚠️ OPENAI_API_KEY não configurada');
+    logger.warn('⚠️ OPENAI_API_KEY não configurada');
     return null;
   }
   return new OpenAI({ apiKey });
@@ -184,7 +185,7 @@ Responda APENAS em JSON válido com a estrutura:
       analyzedAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('❌ Erro na análise do criativo:', error);
+    logger.error('❌ Erro na análise do criativo:', error);
     return null;
   }
 }
@@ -285,7 +286,7 @@ Identifique:
 
     return completion.choices[0]?.message?.content || null;
   } catch (error) {
-    console.error('❌ Erro na comparação:', error);
+    logger.error('❌ Erro na comparação:', error);
     return null;
   }
 }
