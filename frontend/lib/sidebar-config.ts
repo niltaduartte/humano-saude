@@ -52,6 +52,8 @@ import {
   Filter,
   UserPlus,
   Briefcase,
+  Building2,
+  Columns3,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
@@ -145,6 +147,20 @@ export const sidebarItems: SidebarItem[] = [
       { id: 'funil-cotacoes', label: 'Cotações', icon: Receipt, href: `${P}/cotacoes` },
       { id: 'funil-vendas-page', label: 'Vendas', icon: DollarSign, href: `${P}/vendas` },
       { id: 'funil-contratos', label: 'Contratos', icon: FileText, href: `${P}/contratos` },
+    ],
+  },
+
+  // ── CRM AVANÇADO ──
+  {
+    id: 'crm-avancado',
+    label: 'CRM',
+    icon: Columns3,
+    color: 'gold',
+    children: [
+      { id: 'crm-pipeline', label: 'Pipeline Kanban', icon: Columns3, href: `${P}/crm`, badge: { text: 'NOVO', variant: 'gold' } },
+      { id: 'crm-contacts', label: 'Contatos', icon: UserPlus, href: `${P}/crm/contacts` },
+      { id: 'crm-companies', label: 'Empresas', icon: Building2, href: `${P}/crm/companies` },
+      { id: 'crm-analytics', label: 'Analytics CRM', icon: BarChart3, href: `${P}/crm/analytics` },
     ],
   },
 
